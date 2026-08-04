@@ -12,6 +12,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "echarts": "^6.1.0"
+    "echarts": "^6.1.0",
+    "stock-sdk": "^2.4.1"
   }
 }
