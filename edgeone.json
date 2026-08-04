@@ -1,0 +1,7 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "npm run check",
+  "outputDirectory": "./",
+  "mainlandRegions": ["ap-shanghai"],
+  "overseasRegions": ["ap-hongkong"]
+}
