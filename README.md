@@ -1,12 +1,18 @@
 # 情绪之道 MVP
 
-这是一个可运行的本地 MVP，用来验证“板块情绪 + 主力资金流向曲线 + 板块内人气热股 + 风险提示”的产品形态。页面会通过本地代理读取东方财富公开行情端点；接口不可用时自动降级为演示数据。
+这是一个已部署到公网的个人投研平台 MVP，用来验证“板块情绪 + 主力资金流向曲线 + 板块内人气热股 + 风险提示”的产品形态。线上页面优先作为产品展示入口；本地启动只用于开发和调试。
 
 ## 打开方式
 
-最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
+公开访问：
 
-需要 Node.js 18 或更高版本。在本目录运行：
+```text
+https://a-share-sector-flow-app.vercel.app/
+```
+
+本地开发时才需要启动服务。最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
+
+如果使用系统 Node.js，需要 Node.js 18 或更高版本。在本目录运行：
 
 ```bash
 npm start
@@ -14,9 +20,9 @@ npm start
 
 然后打开 `http://127.0.0.1:4173`。页面每 60 秒自动刷新，也可点击右上角刷新按钮。
 
-## GitHub Desktop + Vercel 公开预览
+## GitHub Desktop + Vercel 公开发布
 
-这条路线适合先把产品界面发给别人看，操作门槛最低：
+这条路线让别人直接通过网址访问产品，操作门槛最低：
 
 1. 打开 GitHub Desktop。
 2. 选择 `Add Local Repository`。
@@ -25,7 +31,15 @@ npm start
 5. 打开 Vercel，选择 `Add New Project`，导入刚发布的 GitHub 仓库。
 6. Framework Preset 选择 `Other` 或静态默认配置，直接 Deploy。
 
-当前 Vercel 配置使用 `vercel.json` 作为静态公开预览。它会展示完整前端体验；如果没有后端 API，页面会自动降级为演示数据。
+当前 Vercel 配置使用 `vercel.json` 作为静态公开版本。它会展示完整前端体验；如果没有后端 API，页面会自动降级为演示数据。
+
+每次在本地改完代码后，改动不会自动同步到 GitHub。需要执行一次发布链路：
+
+```text
+GitHub Desktop -> Commit to main -> Push origin -> Vercel 自动重新部署
+```
+
+也就是说，Vercel 会自动监听 GitHub 的更新，但 Codex 在本地帮你改文件后，仍需要提交并推送到 GitHub。
 
 真实 AKShare、AI Agent、定时任务和缓存需要单独部署后端服务，推荐使用 `docker-compose.yml`：
 
@@ -35,6 +49,20 @@ akshare: Python AKShare Data Service
 ```
 
 详见 `docs/DEPLOYMENT.md`。
+
+## 低成本数据更新方案
+
+如果不想维护一直在线的服务器，可以使用 Serverless + 外部定时触发：
+
+```text
+Vercel Cron / cron-job.org
+-> 调用抓取函数
+-> Python AKShare 数据服务或轻量采集任务
+-> 写入 Supabase / MongoDB Atlas / Redis 云缓存
+-> 前端读取缓存 API
+```
+
+这个方案把“看网页”和“更新数据”拆开。用户打开网页时不实时跑 AKShare，而是读取 9:00、12:00、20:00 定时更新后的缓存结果。好处是成本低、页面响应快；代价是架构多了数据库、定时任务和数据过期状态管理。
 
 ## 项目 Harness
 
