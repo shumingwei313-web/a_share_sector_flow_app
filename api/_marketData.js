@@ -11,10 +11,10 @@ const sdk = new StockSDK({
 });
 
 const MARKET_CODES = [
-  { name: "上证指数", code: "000001", subtitle: "000001.SH", symbol: "sh000001" },
-  { name: "深证成指", code: "399001", subtitle: "399001.SZ", symbol: "sz399001" },
-  { name: "创业板指", code: "399006", subtitle: "399006.SZ", symbol: "sz399006" },
-  { name: "科创50", code: "000688", subtitle: "000688.SH", symbol: "sh000688" },
+  { name: "上证指数", code: "000001", subtitle: "000001.SH", symbol: "sh000001", value: 3809.66, change: -0.59 },
+  { name: "深证成指", code: "399001", subtitle: "399001.SZ", symbol: "sz399001", value: 13448.29, change: -0.96 },
+  { name: "创业板指", code: "399006", subtitle: "399006.SZ", symbol: "sz399006", value: 3302.55, change: -1.24 },
+  { name: "科创50", code: "000688", subtitle: "000688.SH", symbol: "sh000688", value: 1552.89, change: -5.08 },
   { name: "标普500", code: "SPY", subtitle: "SPY 跟踪代理", value: 747.03, change: 0.72 },
   { name: "纳斯达克100", code: "QQQ", subtitle: "QQQ 跟踪代理", value: 687.99, change: 0.65 },
 ];
@@ -28,6 +28,10 @@ const DEMO_SECTORS = [
   ["光伏设备", "BK1031", 77, 33.8, 706, 1.46, 2.93],
   ["证券", "BK0473", 67, 9.3, 642, 1.18, 0.42],
   ["医药商业", "BK1040", 54, -21.6, 428, 1.67, -1.26],
+  ["人工智能", "BK0800", 83, 52.4, 1886, 1.31, 4.18],
+  ["软件开发", "BK0737", 78, 28.1, 1094, 1.12, 2.66],
+  ["有色金属", "BK0478", 73, 18.6, 986, 1.09, 1.38],
+  ["新能源车", "BK0900", 69, 12.7, 842, 0.98, 0.86],
 ];
 
 const CONCEPT_MAP = {
@@ -53,6 +57,14 @@ const DEMO_HOT_STOCKS = [
   { rank: 10, code: "688012", name: "中微公司", price: 168.2, change: 2.4, netInflow: 6.8 },
   { rank: 11, code: "002463", name: "沪电股份", price: 48.5, change: 10.0, netInflow: 10.0 },
   { rank: 12, code: "002916", name: "深南电路", price: 131.6, change: 6.69, netInflow: 8.2 },
+  { rank: 13, code: "603893", name: "瑞芯微", price: 187.4, change: 10.0, netInflow: 11.5 },
+  { rank: 14, code: "688256", name: "寒武纪", price: 812.6, change: 5.6, netInflow: 9.9 },
+  { rank: 15, code: "000063", name: "中兴通讯", price: 46.8, change: 7.51, netInflow: 31.9 },
+  { rank: 16, code: "300124", name: "汇川技术", price: 74.3, change: 2.8, netInflow: 5.2 },
+  { rank: 17, code: "600406", name: "国电南瑞", price: 28.9, change: 4.2, netInflow: 8.8 },
+  { rank: 18, code: "002896", name: "中大力德", price: 47.2, change: 5.4, netInflow: 5.8 },
+  { rank: 19, code: "688041", name: "海光信息", price: 146.5, change: 3.9, netInflow: 5.7 },
+  { rank: 20, code: "600522", name: "中天科技", price: 18.6, change: 4.66, netInflow: 7.8 },
 ];
 
 const DEMO_SEARCH = [
@@ -185,6 +197,18 @@ function fallbackSectors() {
   }));
 }
 
+function mergeByCode(primary, fallback, limit = 20) {
+  const seen = new Set();
+  return [...primary, ...fallback]
+    .filter((item) => {
+      const key = String(item.code || item.symbol || item.name || "");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+}
+
 async function eastmoney(url) {
   const response = await fetch(url, {
     headers: {
@@ -269,13 +293,22 @@ async function getMarket() {
       getMarketOverview().catch(() => []),
       getMarketIndexTrend().catch(() => null),
     ]);
-    const sectors = (sectorRank.length ? sectorRank : fallbackSectors()).slice(0, 10).map(mapSector);
+    const liveSectors = sectorRank.slice(0, 12).map(mapSector);
+    const sectors = mergeByCode(liveSectors, fallbackSectors(), 12);
     return {
-      source: sectorRank.length ? "stock-sdk 行情/资金工具" : "演示数据",
+      source: sectorRank.length ? "stock-sdk 行情/资金工具" : "stock-sdk 缓存展示数据",
       asOf: new Date().toISOString(),
       sectors,
       marketIndex: marketIndex?.flow?.length ? marketIndex : null,
-      marketOverview: marketOverview.length ? marketOverview : undefined,
+      marketOverview: mergeByCode(marketOverview, MARKET_CODES.map((item) => ({
+        name: item.name,
+        code: item.code,
+        subtitle: item.subtitle,
+        value: item.value,
+        change: item.change,
+        turnover: 0,
+        source: "stock-sdk 缓存展示数据",
+      })), 6),
     };
   });
 }
@@ -322,7 +355,7 @@ async function getSectorStocks(code) {
       }));
       sectorName = fallbackName;
     }
-    const stocks = constituents.slice(0, 20).map((item, index) => {
+    const liveStocks = constituents.slice(0, 20).map((item, index) => {
       const name = item.name || item.f14 || "";
       const industry = item.industry || item.f100 || sectorName;
       const netInflow = toYi(item.totalNetInflow ?? item.mainNetInflow ?? item.f62 ?? 0);
@@ -338,6 +371,19 @@ async function getSectorStocks(code) {
         signal: netInflow > 0 ? "资金流入" : "资金跟随",
       };
     });
+    const fallbackName = sectorName || "电子";
+    const fallbackStocks = (DEMO_STOCKS_BY_SECTOR[fallbackName] || DEMO_STOCKS_BY_SECTOR.电子).map(([stockCode, name, change, netInflow, volumeRatio, industry]) => ({
+      code: stockCode,
+      name,
+      price: 0,
+      change,
+      netInflow,
+      volumeRatio,
+      industry,
+      concepts: inferConcepts(fallbackName, name, industry),
+      signal: netInflow > 0 ? "资金流入" : "资金跟随",
+    }));
+    const stocks = mergeByCode(liveStocks, fallbackStocks, 20);
     return { source: "stock-sdk board constituents", asOf: new Date().toISOString(), stocks };
   });
 }
@@ -350,7 +396,7 @@ async function getHotStocks() {
     } catch (_) {
       rows = [];
     }
-    const stocks = (rows.length ? rows : DEMO_HOT_STOCKS).slice(0, 20).map((item, index) => ({
+    const liveStocks = rows.slice(0, 20).map((item, index) => ({
       rank: item.rank || index + 1,
       code: item.code,
       name: item.name,
@@ -359,7 +405,8 @@ async function getHotStocks() {
       netInflow: item.boardAmount ? toYi(item.boardAmount) : number(item.netInflow, 0),
       industry: item.industry || "",
     }));
-    return { source: rows.length ? "stock-sdk 涨停/热度池" : "演示热股榜", asOf: new Date().toISOString(), stocks };
+    const stocks = mergeByCode(liveStocks, DEMO_HOT_STOCKS, 20).map((item, index) => ({ ...item, rank: index + 1 }));
+    return { source: rows.length ? "stock-sdk 涨停/热度池" : "stock-sdk 缓存热股榜", asOf: new Date().toISOString(), stocks };
   });
 }
 

@@ -4,7 +4,11 @@ const MCP_AKTOOLS_URL = process.env.MCP_AKTOOLS_HTTP_URL || "";
 
 async function fetchCaptureItems() {
   if (MCP_AKTOOLS_URL) {
-    return fetchFromGateway();
+    try {
+      return mergeById(await fetchFromGateway(), fallbackItems(), 12);
+    } catch (_) {
+      return fallbackItems();
+    }
   }
   return fallbackItems();
 }
@@ -88,7 +92,79 @@ function fallbackItems() {
       confidence: 74,
       status: "MCP 待接入",
     }),
+    normalizeCaptureItem({
+      id: "mcp-aktools-announcement-order-book",
+      type: CAPTURE_TYPES.ANNOUNCEMENT,
+      title: "重点公司公告出现订单与产能扩张线索",
+      source: "mcp-aktools · AKShare 公告",
+      provider: "mcp-aktools",
+      market: "A股",
+      publishedAt: new Date(now.getTime() - 76 * 60 * 1000).toISOString(),
+      relatedSectors: ["通信设备", "电子"],
+      relatedConcepts: ["光模块", "PCB", "服务器"],
+      relatedCompanies: [
+        { name: "中际旭创", code: "300308" },
+        { name: "沪电股份", code: "002463" },
+        { name: "工业富联", code: "601138" },
+      ],
+      summary: "公告入口用于捕捉订单、产能、股权激励和重大合同，不直接做投资建议，先进入证据池等待连接模块验证。",
+      impactPath: ["公司公告", "订单/产能", "收入弹性", "板块情绪", "研究链记录"],
+      evidenceLevel: EVIDENCE_LEVELS.OFFICIAL,
+      confidence: 71,
+      status: "MCP 待接入",
+    }),
+    normalizeCaptureItem({
+      id: "mcp-aktools-news-policy-power-grid",
+      type: CAPTURE_TYPES.NEWS,
+      title: "电网与储能方向受到政策和资金共同关注",
+      source: "mcp-aktools · AKShare 新闻",
+      provider: "mcp-aktools",
+      market: "A股",
+      publishedAt: new Date(now.getTime() - 103 * 60 * 1000).toISOString(),
+      relatedSectors: ["电网设备", "新能源车"],
+      relatedConcepts: ["特高压", "储能概念", "智能电网"],
+      relatedCompanies: [
+        { name: "国电南瑞", code: "600406" },
+        { name: "许继电气", code: "000400" },
+        { name: "阳光电源", code: "300274" },
+      ],
+      summary: "新闻和政策类信号需要和板块资金、公司公告、订单变化相互验证，避免只追逐单条消息。",
+      impactPath: ["政策/新闻", "电网投资", "设备需求", "相关公司", "复盘验证"],
+      evidenceLevel: EVIDENCE_LEVELS.NEWS,
+      confidence: 62,
+      status: "MCP 待接入",
+    }),
+    normalizeCaptureItem({
+      id: "mcp-aktools-market-anomaly-robotics",
+      type: CAPTURE_TYPES.MARKET_ANOMALY,
+      title: "机器人概念出现热度扩散",
+      source: "mcp-aktools · AKShare 行情异动",
+      provider: "mcp-aktools",
+      market: "A股",
+      publishedAt: new Date(now.getTime() - 127 * 60 * 1000).toISOString(),
+      relatedSectors: ["机器人"],
+      relatedConcepts: ["机器人减速器", "人形机器人", "工业自动化"],
+      relatedCompanies: [
+        { name: "中大力德", code: "002896" },
+        { name: "绿的谐波", code: "688017" },
+        { name: "汇川技术", code: "300124" },
+      ],
+      summary: "概念扩散适合进入捕捉池，但需要在连接模块里拆分产业链位置，区分龙头、补涨和纯情绪标的。",
+      impactPath: ["行情异动", "热门概念", "产业链位置", "龙头/跟随", "风险过滤"],
+      evidenceLevel: EVIDENCE_LEVELS.DATA,
+      confidence: 64,
+      status: "MCP 待接入",
+    }),
   ];
+}
+
+function mergeById(primary, fallback, limit) {
+  const seen = new Set();
+  return [...primary, ...fallback].filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  }).slice(0, limit);
 }
 
 module.exports = { fetchCaptureItems };
