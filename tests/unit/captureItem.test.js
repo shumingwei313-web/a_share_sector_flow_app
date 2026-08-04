@@ -23,3 +23,19 @@ test("normalizeCaptureItem rejects unknown type into news fallback", () => {
   assert.equal(item.type, CAPTURE_TYPES.NEWS);
   assert.equal(item.typeLabel, "新闻");
 });
+
+test("normalizeCaptureItem preserves market and provider metadata", () => {
+  const item = normalizeCaptureItem({
+    id: "us-news",
+    type: CAPTURE_TYPES.NEWS,
+    title: "AI infrastructure news",
+    source: "financial-datasets/mcp-server",
+    market: "美股",
+    provider: "financial-datasets/mcp-server",
+    assetClass: "equity",
+  });
+
+  assert.equal(item.market, "美股");
+  assert.equal(item.provider, "financial-datasets/mcp-server");
+  assert.equal(item.assetClass, "equity");
+});

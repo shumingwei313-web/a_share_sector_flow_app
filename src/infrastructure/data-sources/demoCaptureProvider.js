@@ -7,7 +7,7 @@ async function fetchCaptureItems() {
       id: "demo-market-anomaly-power",
       type: CAPTURE_TYPES.MARKET_ANOMALY,
       title: "电力设备资金与价格同步走强",
-      source: "东方财富行情兜底",
+      source: "stock-sdk 行情兜底",
       publishedAt: now.toISOString(),
       relatedSectors: ["电力设备"],
       relatedConcepts: ["光伏概念", "储能概念", "电网设备"],

@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { getCaptureFeed } = require("../../src/application/getCaptureFeed");
 const { CAPTURE_TYPES } = require("../../src/domain/captureItem");
+const { createCaptureProviders } = require("../../src/infrastructure/data-sources/captureProviderRouter");
 
 test("getCaptureFeed merges providers and degrades when one provider fails", async () => {
   const okProvider = {
@@ -43,4 +44,17 @@ test("getCaptureFeed filters by capture type", async () => {
 
   assert.equal(feed.items.length, 1);
   assert.equal(feed.items[0].id, "report");
+});
+
+test("capture provider router includes A-share and US MCP lanes in auto mode", () => {
+  const previous = process.env.CAPTURE_PROVIDER;
+  delete process.env.CAPTURE_PROVIDER;
+
+  const names = createCaptureProviders().map((provider) => provider.name);
+
+  assert.ok(names.includes("mcp-aktools"));
+  assert.ok(names.includes("financial-datasets"));
+
+  if (previous === undefined) delete process.env.CAPTURE_PROVIDER;
+  else process.env.CAPTURE_PROVIDER = previous;
 });

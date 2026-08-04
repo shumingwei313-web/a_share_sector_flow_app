@@ -239,7 +239,7 @@ async function getMarketOverview() {
       value: number(quote?.price ?? item.value),
       change: number(quote?.changePercent ?? item.change),
       turnover: quote?.amount ? quote.amount / 10_000 : 0,
-      source: quote?.source || "stock-sdk fallback",
+      source: quote?.source || "stock-sdk 数据工具",
     };
   });
 }
@@ -271,7 +271,7 @@ async function getMarket() {
     ]);
     const sectors = (sectorRank.length ? sectorRank : fallbackSectors()).slice(0, 10).map(mapSector);
     return {
-      source: sectorRank.length ? "stock-sdk + 东方财富公开行情" : "演示数据",
+      source: sectorRank.length ? "stock-sdk 行情/资金工具" : "演示数据",
       asOf: new Date().toISOString(),
       sectors,
       marketIndex: marketIndex?.flow?.length ? marketIndex : null,

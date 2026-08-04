@@ -33,6 +33,9 @@ const requiredFiles = [
   "specs/0003-akshare-data-provider.md",
   "specs/0004-capture-clean-architecture.md",
   "specs/0005-public-deployment-akshare.md",
+  "specs/0006-mcp-capture-sources.md",
+  "src/infrastructure/data-sources/mcpAktoolsCaptureProvider.js",
+  "src/infrastructure/data-sources/financialDatasetsCaptureProvider.js",
   "services/akshare_service/app.py",
   "services/akshare_service/Dockerfile",
   "services/akshare_service/requirements.txt",
@@ -105,6 +108,8 @@ const contextChecks = [
   ["specs/0003-akshare-data-provider.md", "akshare: online"],
   ["specs/0004-capture-clean-architecture.md", "CaptureItem"],
   ["specs/0005-public-deployment-akshare.md", "AKShare 服务化"],
+  ["specs/0006-mcp-capture-sources.md", "mcp-aktools"],
+  ["specs/0006-mcp-capture-sources.md", "financial-datasets/mcp-server"],
 ];
 
 for (const [file, keyword] of contextChecks) {

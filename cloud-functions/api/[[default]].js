@@ -8,6 +8,7 @@ const {
   getStockDetail,
   searchSecurities,
 } = require("../../api/_marketData.js");
+const { handleCaptureRequest } = require("../../src/interfaces/http/captureController.js");
 
 const headers = {
   "Content-Type": "application/json; charset=utf-8",
@@ -44,6 +45,7 @@ async function route(url) {
   if (pathname === "/api/hot-stocks") return getHotStocks();
   if (pathname === "/api/stock-detail") return getStockDetail(searchParams.get("code"));
   if (pathname === "/api/search") return searchSecurities(searchParams.get("q"));
+  if (pathname === "/api/capture") return handleCaptureRequest(url);
 
   const sectorMatch = pathname.match(/^\/api\/sector\/([^/]+)\/stocks$/);
   if (sectorMatch) return getSectorStocks(sectorMatch[1]);
@@ -56,6 +58,7 @@ async function route(url) {
       "/api/hot-stocks",
       "/api/stock-detail?code=300308",
       "/api/search?q=000001",
+      "/api/capture",
       "/api/sector/BK1201/stocks",
     ],
   };

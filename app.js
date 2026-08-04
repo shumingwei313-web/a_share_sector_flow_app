@@ -31,6 +31,7 @@ let hotStocks = [];
 let currentReportType = "strategy";
 let activeConcepts = [];
 let activeWorkspaceModule = "overview";
+let captureMarketFilter = "all";
 let currentLanguage = "zh";
 let searchTimer = null;
 let lastSearchController = null;
@@ -68,13 +69,34 @@ const captureTypes = [
   ["earnings_call", "电话会议"],
   ["research_view", "研报观点"],
 ];
+const captureMarkets = [
+  ["all", "全部信息流"],
+  ["A股", "A股 · mcp-aktools"],
+  ["美股", "美股 · financial-datasets"],
+];
+const captureSourceLanes = [
+  {
+    market: "A股",
+    title: "A股板块信息流",
+    provider: "mcp-aktools",
+    scope: "板块资金、龙虎榜、热度、新闻、公告、财报、行情异动",
+    route: "AKShare / stock-sdk / MCP 网关",
+  },
+  {
+    market: "美股",
+    title: "美股板块信息流",
+    provider: "financial-datasets/mcp-server",
+    scope: "美股新闻、财报、电话会议、公司事件、产业链线索",
+    route: "Financial Datasets MCP / 后端网关",
+  },
+];
 let captureItems = [
   {
     id: "cap-anomaly-001",
     type: "market_anomaly",
     typeLabel: "行情异动",
     title: "电力设备资金与价格同步走强",
-    source: "东方财富行情",
+    source: "stock-sdk 行情兜底",
     time: "09:42",
     priority: "高",
     sector: "电力设备",
@@ -813,7 +835,7 @@ async function openStockDetail(code, fallbackOverride = {}) {
     return;
   }
   $("#stock-modal-title").textContent = `${fallback.name || "读取公司"} · ${code}`;
-  $("#stock-modal-subtitle").textContent = "正在读取东方财富公司行情";
+  $("#stock-modal-subtitle").textContent = "正在读取 stock-sdk 公司行情";
   $("#stock-detail-price").textContent = fallback.price ? fallback.price.toFixed(2) : "--";
   $("#stock-detail-change").textContent = fallback.change ? formatPercent(fallback.change) : "--";
   $("#stock-detail-change").className = Number(fallback.change || 0) >= 0 ? "up" : "down";
@@ -829,7 +851,7 @@ async function openStockDetail(code, fallbackOverride = {}) {
     const data = await response.json();
     const stock = data.stock || fallback;
     $("#stock-modal-title").textContent = `${stock.name || fallback.name || code} · ${stock.code || code}`;
-    $("#stock-modal-subtitle").textContent = `A股公司 · ${data.source || "东方财富行情"} · ${new Date(data.asOf || Date.now()).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
+    $("#stock-modal-subtitle").textContent = `A股公司 · ${data.source || "stock-sdk 数据工具"} · ${new Date(data.asOf || Date.now()).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
     $("#stock-detail-price").textContent = Number(stock.price || fallback.price || 0).toFixed(2);
     $("#stock-detail-change").textContent = formatPercent(stock.change || fallback.change || 0);
     $("#stock-detail-change").className = Number(stock.change || fallback.change || 0) >= 0 ? "up" : "down";
@@ -908,11 +930,12 @@ function getResearchModuleData(key) {
         ["行情异动", selectedSector.name, `${formatPercent(selectedSector.change)} / ${formatMoney(selectedSector.netInflow)}`],
         ["热门概念", concept, "来自当前总览联动"],
         ["热股线索", topHot?.name || "等待热榜", topHot ? `热度第 ${topHot.rank}` : "读取中"],
-        ["待补来源", "新闻 / 公告 / 财报", "AKShare 与公开资料"],
+        ["信息来源", "A股 / 美股", "mcp-aktools + financial-datasets"],
       ],
       cards: [
         ["发生了什么", `${selectedSector.name}资金异动`, `当前净流入${formatMoney(selectedSector.netInflow)}，先记录为研究信号，不直接视为结论。`],
-        ["来自哪里", "行情与热榜", "当前信号来自东方财富行情，下一步用 AKShare 补新闻、公告、财务和业绩事件。"],
+        ["A股来源", "mcp-aktools", "接入 A 股板块、龙虎榜、新闻、公告、财报和行情异动信息流。"],
+        ["美股来源", "financial-datasets", "接入美股新闻、财报、电话会议和产业链映射线索。"],
         ["原始证据", "保留来源与时间", "捕捉阶段只做归档和去重，避免过早解释。"],
       ],
       steps: [
@@ -1047,9 +1070,11 @@ function getResearchModuleData(key) {
 }
 
 function getFilteredCaptureItems() {
-  return captureFilter === "all"
-    ? captureItems
-    : captureItems.filter((item) => item.type === captureFilter);
+  return captureItems.filter((item) => {
+    const typeMatched = captureFilter === "all" || item.type === captureFilter;
+    const marketMatched = captureMarketFilter === "all" || item.market === captureMarketFilter;
+    return typeMatched && marketMatched;
+  });
 }
 
 function mapCaptureItemForUi(item) {
@@ -1065,6 +1090,8 @@ function mapCaptureItemForUi(item) {
     sector: item.relatedSectors?.[0] || item.sector || "待映射",
     concepts: item.relatedConcepts || item.concepts || [],
     companies,
+    market: item.market || "A股",
+    provider: item.provider || item.source || "",
     priority: item.priority || (item.confidence >= 70 ? "高" : item.confidence >= 55 ? "中" : "低"),
   };
 }
@@ -1102,8 +1129,33 @@ function renderCaptureWorkbench() {
     return `<button type="button" class="${captureFilter === key ? "active" : ""}" data-capture-filter="${key}">${label}<small>${count}</small></button>`;
   }).join("");
 
+  $("#capture-market-filters").innerHTML = captureMarkets.map(([key, label]) => {
+    const count = key === "all" ? captureItems.length : captureItems.filter((item) => item.market === key).length;
+    return `<button type="button" class="${captureMarketFilter === key ? "active" : ""}" data-capture-market="${key}">${label}<small>${count}</small></button>`;
+  }).join("");
+
+  $("#capture-source-lanes").innerHTML = captureSourceLanes.map((lane) => {
+    const laneItems = captureItems.filter((item) => item.market === lane.market);
+    const providerNames = [...new Set(laneItems.map((item) => item.provider).filter(Boolean))];
+    const connected = providerNames.some((name) => name.includes(lane.provider.split("/")[0]));
+    const status = connected ? "已接入" : "待接入";
+    const statusClass = connected ? "live" : "pending";
+    return `
+      <button class="capture-source-card ${captureMarketFilter === lane.market ? "active" : ""}" type="button" data-capture-market="${lane.market}">
+        <span>${lane.market}</span>
+        <strong>${lane.title}</strong>
+        <p>${lane.scope}</p>
+        <div>
+          <em>${lane.provider}</em>
+          <small class="${statusClass}">${status} · ${laneItems.length} 条</small>
+        </div>
+        <small>${lane.route}</small>
+      </button>
+    `;
+  }).join("");
+
   $("#capture-stream-title").textContent = captureFilter === "all"
-    ? "全部信号"
+    ? `${captureMarketFilter === "all" ? "全部" : captureMarketFilter}信号`
     : `${captureTypes.find(([key]) => key === captureFilter)?.[1] || "捕捉"}信号`;
 
   $("#capture-list").innerHTML = filtered.map((item) => `
@@ -1112,14 +1164,14 @@ function renderCaptureWorkbench() {
       <div>
         <strong>${item.title}</strong>
         <p>${item.summary}</p>
-        <small>${item.source} · ${item.time} · ${item.sector}</small>
+        <small>${item.market} · ${item.provider || item.source} · ${item.time} · ${item.sector}</small>
       </div>
       <em>${item.priority}</em>
     </button>
   `).join("");
 
   $("#capture-detail").innerHTML = selected ? `
-    <p class="eyebrow">${selected.typeLabel} · ${selected.source}</p>
+    <p class="eyebrow">${selected.market} · ${selected.typeLabel} · ${selected.provider || selected.source}</p>
     <h3>${selected.title}</h3>
     <div class="capture-detail-meta">
       <span>${selected.time}</span>
@@ -1153,6 +1205,20 @@ function renderCaptureWorkbench() {
   $("#capture-filters").querySelectorAll("button").forEach((button) => {
     button.onclick = () => {
       captureFilter = button.dataset.captureFilter;
+      selectedCaptureId = getFilteredCaptureItems()[0]?.id || selectedCaptureId;
+      renderCaptureWorkbench();
+    };
+  });
+  $("#capture-market-filters").querySelectorAll("button").forEach((button) => {
+    button.onclick = () => {
+      captureMarketFilter = button.dataset.captureMarket;
+      selectedCaptureId = getFilteredCaptureItems()[0]?.id || selectedCaptureId;
+      renderCaptureWorkbench();
+    };
+  });
+  $("#capture-source-lanes").querySelectorAll("[data-capture-market]").forEach((button) => {
+    button.onclick = () => {
+      captureMarketFilter = button.dataset.captureMarket;
       selectedCaptureId = getFilteredCaptureItems()[0]?.id || selectedCaptureId;
       renderCaptureWorkbench();
     };
@@ -1275,7 +1341,7 @@ function renderSearchResults(items, query) {
       $("#global-search-input").value = button.dataset.name;
       panel.hidden = true;
       $("#search-results").innerHTML = `
-        <div class="search-meta">已选择 · 东方财富证券目录</div>
+        <div class="search-meta">已选择 · stock-sdk 搜索目录</div>
         <div class="selected-security">
           <strong>${button.dataset.name}</strong>
           <span>${button.dataset.code}</span>
@@ -1376,7 +1442,7 @@ function showResearchCalendar() {
 function showNotifications() {
   const notices = [
     ["系统", "AKShare 数据源接入规格已建立，等待实现 Python Data Service。"],
-    ["搜索", "A 股证券目录检索已接入东方财富公开行情目录。"],
+    ["搜索", "A 股证券目录检索已接入 stock-sdk 搜索工具。"],
     ["AI", "AI Agent 需要 OPENAI_API_KEY 与价格参数后启用真实计费。"],
   ];
   showActionPopover($("#notification-btn"), `
@@ -1491,7 +1557,7 @@ async function loadMarketData() {
     if (data.marketOverview?.length) marketOverview = data.marketOverview;
     selectedSector = sectors.find((sector) => sector.code === selectedSector.code) || sectors[0];
     activeLines = new Set(sectors.slice(0, 8).map((sector) => sector.code));
-    $("#data-source").textContent = "东方财富行情";
+    $("#data-source").textContent = data.source || "stock-sdk 数据工具";
     $("#data-source").className = "source-badge live";
     $("#data-time").textContent = `更新 ${new Date(data.asOf).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
     render();
