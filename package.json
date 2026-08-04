@@ -1,0 +1,17 @@
+{
+  "name": "a-share-sector-flow-dashboard",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/**/*.test.js",
+    "architecture": "node scripts/architecture-check.mjs",
+    "check": "node scripts/quality-check.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "echarts": "^6.1.0"
+  }
+}

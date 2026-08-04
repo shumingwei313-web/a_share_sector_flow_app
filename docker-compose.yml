@@ -1,0 +1,24 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: "4173"
+      CAPTURE_PROVIDER: "auto"
+      AKSHARE_SERVICE_URL: "http://akshare:8765"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-5}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      AI_INPUT_PRICE_PER_1K: "${AI_INPUT_PRICE_PER_1K:-0}"
+      AI_OUTPUT_PRICE_PER_1K: "${AI_OUTPUT_PRICE_PER_1K:-0}"
+    ports:
+      - "4173:4173"
+    depends_on:
+      - akshare
+
+  akshare:
+    build:
+      context: .
+      dockerfile: services/akshare_service/Dockerfile
+    ports:
+      - "8765:8765"

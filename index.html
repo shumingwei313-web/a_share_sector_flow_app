@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>情绪之道</title>
+    <link rel="stylesheet" href="./styles.css?v=20260804-vercel-prep" />
+  </head>
+  <body>
+    <aside class="app-sidebar" aria-label="研究导航">
+      <div class="sidebar-brand">
+        <div class="brand-mark">情</div>
+        <div>
+          <strong>情绪之道</strong>
+          <span>RESEARCH INTELLIGENCE</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="工作区">
+        <p>研究闭环</p>
+        <button class="active" data-module="overview"><span>□</span>总览</button>
+        <button data-module="capture"><span>⌕</span>捕捉<small>01</small></button>
+        <button data-module="connect"><span>⌘</span>连接<small>02</small></button>
+        <button data-module="compare"><span>◉</span>比较<small>03</small></button>
+        <button data-module="conclude"><span>✦</span>判断<small>04</small></button>
+        <button data-module="commit"><span>▣</span>记录<small>05</small></button>
+        <button data-module="check"><span>⌬</span>复盘<small>06</small></button>
+        <button data-module="daily"><span>▦</span>研究日报</button>
+      </nav>
+
+      <section class="sidebar-watch">
+        <div>
+          <p>当前研究链</p>
+          <button aria-label="添加关注产业">+</button>
+        </div>
+        <span><i></i>事件</span>
+        <span><i class="orange"></i>产业链</span>
+        <span><i class="blue"></i>公司</span>
+        <span><i></i>笔记与复盘</span>
+      </section>
+    </aside>
+
+    <main class="shell app-main">
+      <header class="research-topbar" aria-label="全局研究工具栏">
+        <div class="search-area">
+          <label class="global-search">
+            <span>⌕</span>
+            <input id="global-search-input" type="search" placeholder="搜索 A 股代码、公司、指数、主题或事件..." aria-label="搜索 A 股代码、公司、指数、主题或事件" autocomplete="off" />
+            <kbd>⌘ K</kbd>
+          </label>
+          <div id="search-results" class="search-results" hidden></div>
+        </div>
+        <div class="research-status">
+          <i></i>
+          <span>研究引擎在线</span>
+        </div>
+        <div class="topbar-actions" aria-label="研究工具">
+          <button id="language-btn" type="button" title="中英文转换">文</button>
+          <button id="theme-btn" type="button" title="亮色/黑暗模式">☼</button>
+          <button id="calendar-btn" type="button" title="研究日历" aria-label="研究日历">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3v3M17 3v3M4.5 9h15M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z" />
+              <path d="M8 13h.01M12 13h.01M16 13h.01M8 16h.01M12 16h.01M16 16h.01" />
+            </svg>
+          </button>
+          <button id="notification-btn" class="notify-btn" type="button" title="系统通知" aria-label="系统通知">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" />
+              <path d="M10 21a2.2 2.2 0 0 0 4 0" />
+            </svg>
+            <small>32</small>
+          </button>
+          <button id="ask-ai-btn" class="ask-ai-btn" type="button">✦ 询问 AI</button>
+          <div id="action-popover" class="action-popover" hidden></div>
+        </div>
+      </header>
+
+      <header class="topbar">
+        <section class="brand-block">
+          <h1>情绪之道</h1>
+          <p class="brand-subtitle">持续追踪投资逻辑，而不是追逐股价。把事件、产业链、公司和个人判断沉淀成可复盘的研究链。</p>
+          <div class="brand-metrics" aria-label="产品能力">
+            <span>资金强度</span>
+            <span>产业链传导</span>
+            <span>研究笔记</span>
+            <span>复盘验证</span>
+          </div>
+        </section>
+        <section class="market-clock">
+          <div class="market-status-line">
+            <span id="trade-status">盘中监控</span>
+            <span id="data-source" class="source-badge demo">演示数据</span>
+          </div>
+          <strong id="clock">--:--:--</strong>
+        </section>
+      </header>
+
+      <section id="overview-view" class="module-view active" aria-label="情绪之道总览">
+      <section class="summary-grid market-overview-strip" aria-label="市场概览">
+        <div class="summary-head">
+          <div>
+            <h2>主要市场</h2>
+            <span>A股核心指数与美股宽基跟踪</span>
+          </div>
+        </div>
+        <article class="metric market-card" data-market-index="0" role="button" tabindex="0" aria-label="查看上证指数行情详情">
+          <span id="market-name-0">上证指数</span>
+          <small id="market-code-0">000001.SH</small>
+          <div class="market-card-value">
+            <strong id="market-value-0">--</strong>
+            <em id="market-change-0">--</em>
+          </div>
+        </article>
+        <article class="metric market-card" data-market-index="1" role="button" tabindex="0" aria-label="查看深证成指行情详情">
+          <span id="market-name-1">深证成指</span>
+          <small id="market-code-1">399001.SZ</small>
+          <div class="market-card-value">
+            <strong id="market-value-1">--</strong>
+            <em id="market-change-1">--</em>
+          </div>
+        </article>
+        <article class="metric market-card" data-market-index="2" role="button" tabindex="0" aria-label="查看创业板指行情详情">
+          <span id="market-name-2">创业板指</span>
+          <small id="market-code-2">399006.SZ</small>
+          <div class="market-card-value">
+            <strong id="market-value-2">--</strong>
+            <em id="market-change-2">--</em>
+          </div>
+        </article>
+        <article class="metric market-card" data-market-index="3" role="button" tabindex="0" aria-label="查看科创50行情详情">
+          <span id="market-name-3">科创50</span>
+          <small id="market-code-3">000688.SH</small>
+          <div class="market-card-value">
+            <strong id="market-value-3">--</strong>
+            <em id="market-change-3">--</em>
+          </div>
+        </article>
+        <article class="metric market-card" data-market-index="4" role="button" tabindex="0" aria-label="查看标普500行情详情">
+          <span id="market-name-4">标普500</span>
+          <small id="market-code-4">SPY 跟踪代理</small>
+          <div class="market-card-value">
+            <strong id="market-value-4">--</strong>
+            <em id="market-change-4">--</em>
+          </div>
+        </article>
+        <article class="metric market-card" data-market-index="5" role="button" tabindex="0" aria-label="查看纳斯达克100行情详情">
+          <span id="market-name-5">纳斯达克100</span>
+          <small id="market-code-5">QQQ 跟踪代理</small>
+          <div class="market-card-value">
+            <strong id="market-value-5">--</strong>
+            <em id="market-change-5">--</em>
+          </div>
+        </article>
+      </section>
+
+      <div id="market-modal" class="market-modal" hidden>
+        <div class="market-dialog" role="dialog" aria-modal="true" aria-labelledby="market-modal-title">
+          <button id="market-modal-close" class="modal-close" type="button" aria-label="关闭">×</button>
+          <p class="market-modal-eyebrow">MARKET INDEX</p>
+          <h2 id="market-modal-title">上证指数 · 000001.SH</h2>
+          <p id="market-modal-subtitle" class="market-modal-subtitle">A股指数 · SSE · eastmoney-index</p>
+          <div class="market-detail-grid" aria-label="指数行情详情">
+            <article>
+              <span>最新点位</span>
+              <strong id="market-detail-value">--</strong>
+              <em id="market-detail-change">--</em>
+            </article>
+            <article>
+              <span>日内区间</span>
+              <strong id="market-detail-range">--</strong>
+            </article>
+            <article>
+              <span>今开 / 昨收</span>
+              <strong id="market-detail-open">--</strong>
+            </article>
+            <article>
+              <span>成交额</span>
+              <strong id="market-detail-turnover">--</strong>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <div id="stock-modal" class="market-modal stock-modal" hidden>
+        <div class="market-dialog stock-dialog" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title">
+          <button id="stock-modal-close" class="modal-close" type="button" aria-label="关闭">×</button>
+          <p class="market-modal-eyebrow">COMPANY SNAPSHOT</p>
+          <h2 id="stock-modal-title">公司名称 · 000000</h2>
+          <p id="stock-modal-subtitle" class="market-modal-subtitle">A股公司 · 东方财富行情</p>
+          <div class="market-detail-grid stock-detail-grid" aria-label="公司基本信息">
+            <article>
+              <span>最新价格</span>
+              <strong id="stock-detail-price">--</strong>
+              <em id="stock-detail-change">--</em>
+            </article>
+            <article>
+              <span>总市值</span>
+              <strong id="stock-detail-marketcap">--</strong>
+            </article>
+            <article>
+              <span>市盈率 / 换手率</span>
+              <strong id="stock-detail-valuation">--</strong>
+            </article>
+            <article>
+              <span>成交额</span>
+              <strong id="stock-detail-turnover">--</strong>
+            </article>
+          </div>
+          <section class="stock-kline-panel">
+            <div class="section-title">
+              <h3>近日日 K</h3>
+              <span id="stock-detail-range">等待数据</span>
+            </div>
+            <div id="stock-kline-chart" class="stock-kline-chart" role="img" aria-label="个股近日日 K"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="workspace">
+        <aside class="panel sector-panel">
+          <div class="panel-head">
+            <h2>板块热度</h2>
+            <div class="segmented" role="tablist" aria-label="排序方式">
+              <button class="active" data-sort="score">热度</button>
+              <button data-sort="netInflow">资金</button>
+              <button data-sort="volumeRatio">量比</button>
+            </div>
+          </div>
+          <div id="sector-list" class="sector-list"></div>
+        </aside>
+
+        <section class="panel detail-panel">
+          <div class="panel-head detail-head">
+            <div>
+              <p class="eyebrow">当前板块</p>
+              <h2 id="sector-name">--</h2>
+            </div>
+            <div class="badge" id="sector-signal">--</div>
+          </div>
+
+          <div class="detail-grid">
+            <article class="detail-stat">
+              <span>主力净流入</span>
+              <strong id="sector-net">--</strong>
+            </article>
+            <article class="detail-stat">
+              <span>成交额</span>
+              <strong id="sector-turnover">--</strong>
+            </article>
+            <article class="detail-stat">
+              <span>量比</span>
+              <strong id="sector-volume">--</strong>
+            </article>
+            <article class="detail-stat">
+              <span>涨跌幅</span>
+              <strong id="sector-change">--</strong>
+            </article>
+          </div>
+
+          <section class="flow-chart" aria-label="板块主力资金净流入曲线">
+            <div class="section-title">
+              <div>
+                <h3>板块资金净流入与大盘走势</h3>
+                <span id="chart-subtitle">左轴：主力净流入亿元 · 右轴：上证指数涨跌幅</span>
+              </div>
+              <span id="data-time">等待数据</span>
+            </div>
+            <div id="chart-legend" class="chart-legend" aria-label="板块图例"></div>
+            <div class="chart-body">
+              <div id="flow-chart-stage" class="flow-chart-stage">
+                <div id="flow-chart-canvas" role="img" aria-label="多板块资金净流入与大盘分时曲线"></div>
+              </div>
+            </div>
+            <div id="chart-digest" class="chart-digest" aria-label="盘中结构摘要"></div>
+          </section>
+        </section>
+
+        <aside class="panel insight-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">东方财富实时排名</p>
+              <h2>热股榜</h2>
+            </div>
+            <button id="refresh-btn" class="icon-btn" aria-label="刷新数据" title="刷新数据">↻</button>
+          </div>
+          <div class="hot-rank-meta">
+            <span>大家都在看</span>
+            <span id="hot-update-time">等待更新</span>
+          </div>
+          <div id="hot-stock-list" class="hot-stock-list">
+            <p class="hot-loading">正在读取热股榜...</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel stock-table-wrap research-bottom-panel">
+        <div class="concept-panel">
+          <div class="section-title concept-title">
+            <h3>板块热门概念</h3>
+          </div>
+          <div id="sector-concepts" class="concept-tags">
+            <span class="concept-tag">等待个股数据</span>
+          </div>
+          <div id="stock-message-list" class="stock-message-list" aria-label="个股消息"></div>
+          <div class="panel-head insight-heading concept-insight-heading">
+            <h2>观察建议</h2>
+          </div>
+          <div id="insight-list" class="insight-list"></div>
+
+          <section class="risk-box">
+            <h3>风控提示</h3>
+            <p id="risk-text">等待数据加载。</p>
+          </section>
+        </div>
+        <div class="stock-panel">
+          <div class="section-title">
+            <h3 id="stock-section-title">板块情绪热股</h3>
+          </div>
+          <table class="stock-table">
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>涨跌幅</th>
+                <th>主力净流入</th>
+                <th>量比</th>
+                <th>信号</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table"></tbody>
+          </table>
+        </div>
+      </section>
+      </section>
+
+      <section id="research-module-view" class="module-view research-module" hidden aria-live="polite">
+        <div class="research-hero">
+          <div>
+            <p id="module-eyebrow" class="eyebrow">RESEARCH MODULE</p>
+            <h2 id="module-title">研究模块</h2>
+            <p id="module-subtitle">选择左侧模块查看对应研究工作流。</p>
+          </div>
+          <button class="primary-action" type="button">+ 开始研究</button>
+        </div>
+
+        <div id="module-kpis" class="module-kpis"></div>
+        <div id="module-cards" class="module-card-grid"></div>
+        <section class="module-panel">
+          <div class="section-title">
+            <h3 id="module-panel-title">研究链路</h3>
+            <span id="module-panel-note">由当前板块、热股榜与研究规则生成</span>
+          </div>
+          <div id="module-timeline" class="module-timeline"></div>
+        </section>
+        <section id="capture-workbench" class="capture-workbench" hidden>
+          <div class="capture-toolbar">
+            <div>
+              <p class="eyebrow">EVIDENCE INBOX</p>
+              <h3>信息捕捉台</h3>
+            </div>
+            <div id="capture-filters" class="capture-filters" aria-label="捕捉类型筛选"></div>
+          </div>
+          <div class="capture-layout">
+            <section class="capture-stream" aria-label="捕捉信息流">
+              <div class="section-title">
+                <h3 id="capture-stream-title">全部信号</h3>
+                <span id="capture-stream-note">保留来源、时间和证据类型</span>
+              </div>
+              <div id="capture-list" class="capture-list"></div>
+            </section>
+            <aside class="capture-detail" aria-label="捕捉详情">
+              <div id="capture-detail"></div>
+            </aside>
+          </div>
+        </section>
+      </section>
+
+      <div id="utility-modal" class="utility-modal" hidden>
+        <div class="utility-dialog" role="dialog" aria-modal="true" aria-labelledby="utility-title">
+          <button id="utility-close-btn" class="modal-close" type="button" aria-label="关闭">×</button>
+          <p id="utility-eyebrow" class="eyebrow">UTILITY</p>
+          <h2 id="utility-title">功能</h2>
+          <div id="utility-body" class="utility-body"></div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./vendor/echarts.min.js"></script>
+    <script src="./app.js?v=20260804-vercel-prep"></script>
+  </body>
+</html>
