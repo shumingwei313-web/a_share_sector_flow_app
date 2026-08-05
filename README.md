@@ -10,6 +10,21 @@
 https://a-share-sector-flow-app.vercel.app/
 ```
 
+## 项目展示
+
+这个仓库同时作为我的个人项目主页。首页优先展示主项目「情绪之道」，另外两个小游戏作为独立作品入口，用来展示前端交互和视觉实现能力。
+
+- 主项目：情绪之道，个人 A 股情绪与研究工作台。
+- 其他项目：霓虹贪吃蛇，`/showcase/neon-serpent.html`。
+- 其他项目：星云突击，`/showcase/nebula-strike.html`。
+
+线上试玩：
+
+```text
+https://a-share-sector-flow-app.vercel.app/showcase/neon-serpent.html
+https://a-share-sector-flow-app.vercel.app/showcase/nebula-strike.html
+```
+
 本地开发时才需要启动服务。最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
 
 如果使用系统 Node.js，需要 Node.js 18 或更高版本。在本目录运行：

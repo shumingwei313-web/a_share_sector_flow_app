@@ -1448,8 +1448,8 @@ function toggleLanguage() {
   document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
   $("#language-btn").textContent = currentLanguage === "zh" ? "文" : "EN";
   document.querySelector(".brand-subtitle").textContent = currentLanguage === "zh"
-    ? "记录市场情绪、产业链线索与个人判断，把每日观察沉淀成可复盘的研究资产。"
-    : "Track market sentiment, industry signals, and your own research trail in one reviewable workspace.";
+    ? "我的主项目是情绪之道：一个面向个人投研的 AI 研究工作台，用来记录市场情绪、产业链线索与个人判断。"
+    : "My main project is Qingxu Zhidao: an AI research workspace for market sentiment, industry signals, and personal investment notes.";
   hideActionPopover();
 }
 
