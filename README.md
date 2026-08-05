@@ -10,7 +10,7 @@
 https://a-share-sector-flow-app.vercel.app/
 ```
 
-独立游戏实验：
+其他项目：
 
 ```text
 https://a-share-sector-flow-app.vercel.app/games/

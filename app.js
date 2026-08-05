@@ -1093,27 +1093,27 @@ function getResearchModuleData(key) {
       ],
     },
     games: {
-      eyebrow: "GAME LAB",
-      title: "游戏实验室",
-      subtitle: "收纳独立交互实验，展示全屏 Canvas、键鼠控制、移动端触控和游戏 HUD 的前端实现能力。",
+      eyebrow: "OTHER PROJECTS",
+      title: "其他项目",
+      subtitle: "主项目是情绪之道；这里单独收纳网页交互、动效和小游戏实验，作为额外作品展示。",
       kpis: [
         ["已收录", "2 个", "独立 HTML 游戏"],
         ["交互类型", "Canvas", "键鼠 / 触控"],
         ["部署路径", "/games", "GitHub / Vercel / EdgeOne"],
-        ["定位", "作品展示", "与研究主站分离"],
+        ["定位", "其他作品", "不影响主项目叙事"],
       ],
       links: [
         ["ARCADE", "霓虹贪吃蛇", "赛博风格的全屏蛇类生存游戏，包含排行榜、小地图、触控摇杆和加速机制。", "games/neon-serpent.html"],
         ["SHOOTER", "星云突击", "太空射击游戏，包含波次、生命值、升级、Boss 和沉浸式 HUD。", "games/nebula-strike.html"],
-        ["INDEX", "游戏入口页", "两个游戏的独立展示页，适合直接分享给他人试玩。", "games/index.html"],
+        ["INDEX", "其他项目页", "两个游戏的独立展示页，适合直接分享给他人试玩。", "games/index.html"],
       ],
       cards: [
         ["展示重点", "完整交互", "每个游戏都是独立页面，打开即可全屏体验。"],
         ["适配范围", "桌面与移动端", "保留原游戏的键鼠、触控和安全区适配。"],
-        ["更新方式", "跟随主站部署", "提交到 GitHub 后，Vercel 与 EdgeOne 会随主站一起更新。"],
+        ["更新方式", "跟随仓库部署", "提交到 GitHub 后，Vercel 与 EdgeOne 会随仓库一起更新。"],
       ],
       steps: [
-        ["入口", "主站导航", "左侧游戏实验室进入", "已接入"],
+        ["入口", "主站导航", "左侧其他项目进入", "已接入"],
         ["页面", "独立游戏", "/games/neon-serpent.html 与 /games/nebula-strike.html", "已加入"],
         ["分享", "线上访问", "部署后可直接复制游戏链接", "待推送"],
       ],
@@ -1304,7 +1304,7 @@ function renderCaptureWorkbench() {
 function renderResearchModule() {
   if (activeWorkspaceModule === "overview") return;
   const data = getResearchModuleData(activeWorkspaceModule);
-  document.querySelector(".primary-action").textContent = activeWorkspaceModule === "games" ? "打开游戏入口" : "+ 开始研究";
+  document.querySelector(".primary-action").textContent = activeWorkspaceModule === "games" ? "打开其他项目" : "+ 开始研究";
   $("#module-eyebrow").textContent = data.eyebrow;
   $("#module-title").textContent = data.title;
   $("#module-subtitle").textContent = data.subtitle;
