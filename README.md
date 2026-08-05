@@ -10,14 +10,6 @@
 https://a-share-sector-flow-app.vercel.app/
 ```
 
-其他项目：
-
-```text
-https://a-share-sector-flow-app.vercel.app/games/
-https://a-share-sector-flow-app.vercel.app/games/neon-serpent.html
-https://a-share-sector-flow-app.vercel.app/games/nebula-strike.html
-```
-
 本地开发时才需要启动服务。最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
 
 如果使用系统 Node.js，需要 Node.js 18 或更高版本。在本目录运行：
