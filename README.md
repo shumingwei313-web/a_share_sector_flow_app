@@ -10,6 +10,14 @@
 https://a-share-sector-flow-app.vercel.app/
 ```
 
+独立游戏实验：
+
+```text
+https://a-share-sector-flow-app.vercel.app/games/
+https://a-share-sector-flow-app.vercel.app/games/neon-serpent.html
+https://a-share-sector-flow-app.vercel.app/games/nebula-strike.html
+```
+
 本地开发时才需要启动服务。最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
 
 如果使用系统 Node.js，需要 Node.js 18 或更高版本。在本目录运行：
@@ -73,6 +81,8 @@ Vercel Cron / cron-job.org
 - `docs/DESIGN_SYSTEM.md`：页面骨架、亮暗主题、组件规则和 UI benchmark。
 - `docs/UI_BENCHMARKS.md`：Investment OS、Figma SDS、shadcn/ui、Untitled UI、Tremor 和 TradingView 的组合参考。
 - `docs/DEVELOPMENT_HARNESS.md`：SDD + TDD、测试金字塔、质量检查和架构护栏。
+- `docs/AI_PRODUCT_AGENT_STRATEGY.md`：LLM + 工具调用 + 记忆 + 规划、RAG 取舍、MCP、多 Agent、可观测性、降级和评测。
+- `docs/AI_HARNESS.md`：AI 在产品中的入口、Agent 分工、工具约束和输出边界。
 - `docs/DATA_SOURCE_AKSHARE.md`：AKShare 数据源接入方案。
 - `docs/ROADMAP.md`：从当前 MVP 到个人投研工作台、Research Shell、MCP 和多 Agent 的路线。
 - `specs/0001-personal-investment-os.md`：第一阶段产品规格。

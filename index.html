@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>情绪之道</title>
-    <link rel="stylesheet" href="./styles.css?v=20260804-vercel-prep" />
+    <link rel="stylesheet" href="./styles.css?v=20260805-polish" />
   </head>
   <body>
     <aside class="app-sidebar" aria-label="研究导航">
@@ -26,6 +26,7 @@
         <button data-module="commit"><span>▣</span>记录<small>05</small></button>
         <button data-module="check"><span>⌬</span>复盘<small>06</small></button>
         <button data-module="daily"><span>▦</span>研究日报</button>
+        <button data-module="games"><span>◇</span>游戏实验室</button>
       </nav>
 
       <section class="sidebar-watch">
@@ -70,7 +71,7 @@
             </svg>
             <small>32</small>
           </button>
-          <button id="ask-ai-btn" class="ask-ai-btn" type="button">✦ 询问 AI</button>
+          <button id="ask-ai-btn" class="ask-ai-btn" type="button">✦ 研究助理</button>
           <div id="action-popover" class="action-popover" hidden></div>
         </div>
       </header>
@@ -78,18 +79,18 @@
       <header class="topbar">
         <section class="brand-block">
           <h1>情绪之道</h1>
-          <p class="brand-subtitle">持续追踪投资逻辑，而不是追逐股价。把事件、产业链、公司和个人判断沉淀成可复盘的研究链。</p>
+          <p class="brand-subtitle">记录市场情绪、产业链线索与个人判断，把每日观察沉淀成可复盘的研究资产。</p>
           <div class="brand-metrics" aria-label="产品能力">
-            <span>资金强度</span>
-            <span>产业链传导</span>
-            <span>研究笔记</span>
-            <span>复盘验证</span>
+            <span>市场温度</span>
+            <span>产业链线索</span>
+            <span>证据记录</span>
+            <span>复盘</span>
           </div>
         </section>
         <section class="market-clock">
           <div class="market-status-line">
             <span id="trade-status">盘中监控</span>
-            <span id="data-source" class="source-badge demo">演示数据</span>
+            <span id="data-source" class="source-badge demo">缓存数据</span>
           </div>
           <strong id="clock">--:--:--</strong>
         </section>
@@ -387,6 +388,6 @@
     </main>
 
     <script src="./vendor/echarts.min.js"></script>
-    <script src="./app.js?v=20260804-vercel-prep"></script>
+    <script src="./app.js?v=20260805-polish"></script>
   </body>
 </html>

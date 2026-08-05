@@ -2,6 +2,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { handleCaptureRequest } = require("./src/interfaces/http/captureController");
+const { handleAgentQuery } = require("./src/interfaces/http/agentController");
 
 const PORT = Number(process.env.PORT || 4173);
 const ROOT = __dirname;
@@ -70,7 +71,6 @@ async function eastmoney(url) {
 
 const toYi = (value) => Number(value || 0) / 100_000_000;
 const number = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
-const estimateTokens = (text) => Math.max(1, Math.ceil(String(text || "").length / 2));
 const getStockMarket = (code) => String(code || "").startsWith("6") ? "1" : "0";
 
 function readJson(req) {
@@ -228,54 +228,13 @@ async function searchSecurities(keyword) {
 
 async function runFinancialAgent(req) {
   const body = await readJson(req);
-  const question = String(body.question || "").trim();
-  if (!question) throw new Error("请输入问题");
-  const context = body.context || {};
-  const marketContext = JSON.stringify(context).slice(0, 5000);
-  const prompt = [
-    "你是情绪之道的个人投研助手。你不提供买卖建议，只帮助用户整理公开信息、资金情绪、产业链传导、研究假设、反证和复盘问题。",
-    "请按：结论、依据、不确定性、待验证问题、风险提示 输出。",
-    `当前页面上下文：${marketContext}`,
-    `用户问题：${question}`,
-  ].join("\n\n");
-  const inputTokens = estimateTokens(prompt);
-  const model = process.env.OPENAI_MODEL || "gpt-5";
-  const inputPrice = Number(process.env.AI_INPUT_PRICE_PER_1K || 0);
-  const outputPrice = Number(process.env.AI_OUTPUT_PRICE_PER_1K || 0);
-
-  if (!process.env.OPENAI_API_KEY) {
-    return {
-      configured: false,
-      model,
-      answer: "AI Agent 后端已预留真实接入点。请在启动服务前配置 OPENAI_API_KEY，并按你选择的模型价格配置 AI_INPUT_PRICE_PER_1K / AI_OUTPUT_PRICE_PER_1K 后启用真实 token 计费。",
-      usage: { inputTokens, outputTokens: 0, totalTokens: inputTokens },
-      billing: { currency: "USD", estimatedCost: 0, billable: false },
-    };
-  }
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
+  return handleAgentQuery({
+    body,
+    tools: {
+      getMarket,
+      getHotStocks,
     },
-    body: JSON.stringify({ model, input: prompt, store: false }),
-    signal: AbortSignal.timeout(30_000),
   });
-  if (!response.ok) throw new Error(`AI Agent 返回 ${response.status}`);
-  const payload = await response.json();
-  const output = payload.output_text || (payload.output || []).flatMap((item) => item.content || []).map((item) => item.text || "").join("");
-  const usage = payload.usage || {};
-  const actualInput = usage.input_tokens || inputTokens;
-  const actualOutput = usage.output_tokens || estimateTokens(output);
-  const estimatedCost = (actualInput / 1000) * inputPrice + (actualOutput / 1000) * outputPrice;
-  return {
-    configured: true,
-    model,
-    answer: output || "AI Agent 暂无输出。",
-    usage: { inputTokens: actualInput, outputTokens: actualOutput, totalTokens: actualInput + actualOutput },
-    billing: { currency: "USD", estimatedCost: Number(estimatedCost.toFixed(6)), billable: true },
-  };
 }
 
 async function getStocks(code) {

@@ -4,7 +4,11 @@
 
 AI Harness 的目标是让 AI 成为可靠研究助手，而不是随口生成观点的聊天框。
 
+更完整的 AI 产品与 Agent 设计见 `docs/AI_PRODUCT_AGENT_STRATEGY.md`。那里定义了 LLM + 工具调用 + 记忆 + 规划的基本链路、RAG 和微调取舍、MCP 位置、多 Agent 编排、可观测性、降级和评测方案。
+
 ## Agent 分工
+
+当前阶段采用“主 Agent 编排 + 专家 Agent 执行”的产品形态。主 Agent 负责理解用户目标、选择研究闭环阶段和调用工具；专家 Agent 负责各自阶段的结构化输出。
 
 | Agent | 职责 | 输入 | 输出 |
 | --- | --- | --- | --- |
@@ -81,6 +85,53 @@ save_research_note
 search_research_memory
 generate_daily_brief
 ```
+
+## RAG 在情绪之道里的用法
+
+RAG 不是独立功能，而是 AI Agent 每次回答前的证据准备过程。
+
+当前第一版采用轻量 RAG：
+
+```text
+用户问题
+-> 当前页面上下文：选中板块、概念、热股、市场状态
+-> Capture 信息流：新闻、公告、财报、电话会议、研报观点、行情异动
+-> Market 数据：板块热度、资金净流入、涨跌幅、热股榜
+-> 关键词/实体召回
+-> 证据排序
+-> Evidence Pack
+-> LLM 结构化回答
+```
+
+为什么先这样做：
+
+- 展示阶段不需要马上上向量数据库，也能解释 RAG 链路。
+- 当前数据结构已经有 `CaptureItem`、板块、概念、个股和热股榜。
+- 轻量检索更容易测试，也更容易观察失败原因。
+
+后续升级路径：
+
+```text
+轻量关键词检索
+-> Evidence Store 持久化
+-> Embedding 向量检索
+-> Hybrid Search：关键词 + 向量 + 时间衰减 + 证据等级
+-> 用户研究记忆召回
+```
+
+RAG 输出给模型的 Evidence Pack 必须包含：
+
+- `title`：证据标题。
+- `source`：来源。
+- `type`：新闻、公告、财报、电话会议、研报观点、行情异动、板块行情或热股榜。
+- `summary`：摘要。
+- `companies`：相关公司。
+- `sectors`：相关板块。
+- `concepts`：相关概念。
+- `evidenceLevel`：证据等级。
+- `confidence`：系统置信度。
+
+AI 回答时必须引用 Evidence Pack，而不是凭空生成。
 
 ## 输出约束
 

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>游戏实验室 · 情绪之道</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1314;
+        --surface: #141c1e;
+        --line: rgba(82, 99, 101, 0.72);
+        --ink: #eef4f2;
+        --muted: #92a19d;
+        --green: #2dd4bf;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 80% 0%, rgba(45, 212, 191, 0.06), transparent 28%),
+          linear-gradient(180deg, #101617, var(--bg));
+        color: var(--ink);
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      main {
+        width: min(1120px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .top {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: #7dd3fc;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 5vw, 56px);
+        line-height: 1;
+      }
+
+      .top p {
+        max-width: 620px;
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.75;
+      }
+
+      .back {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .card {
+        min-height: 260px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background:
+          linear-gradient(135deg, rgba(45, 212, 191, 0.08), transparent 36%),
+          var(--surface);
+        padding: 28px;
+        transition: border-color 0.18s ease, transform 0.18s ease;
+      }
+
+      .card:hover {
+        border-color: rgba(45, 212, 191, 0.86);
+        transform: translateY(-2px);
+      }
+
+      .card span {
+        display: inline-flex;
+        border: 1px solid rgba(45, 212, 191, 0.42);
+        border-radius: 999px;
+        color: var(--green);
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .card h2 {
+        margin: 22px 0 12px;
+        font-size: clamp(24px, 3vw, 34px);
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .card strong {
+        display: block;
+        margin-top: 34px;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: min(100% - 28px, 1120px);
+          padding: 34px 0;
+        }
+
+        .top {
+          display: block;
+        }
+
+        .back {
+          display: inline-block;
+          margin-top: 24px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="top">
+        <div>
+          <p class="eyebrow">GAME LAB</p>
+          <h1>游戏实验室</h1>
+          <p>这里收纳独立交互实验。它们和主站研究功能分离，适合展示网页交互、动效、键鼠与移动端控制能力。</p>
+        </div>
+        <a class="back" href="../index.html">返回情绪之道</a>
+      </section>
+
+      <section class="grid" aria-label="游戏列表">
+        <a class="card" href="./neon-serpent.html">
+          <span>ARCADE</span>
+          <h2>霓虹贪吃蛇</h2>
+          <p>赛博风格的全屏蛇类生存游戏，包含排行榜、小地图、触控摇杆和加速机制。</p>
+          <strong>打开游戏</strong>
+        </a>
+        <a class="card" href="./nebula-strike.html">
+          <span>SHOOTER</span>
+          <h2>星云突击</h2>
+          <p>太空射击游戏，包含波次、生命值、升级、Boss 和沉浸式 HUD。</p>
+          <strong>打开游戏</strong>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

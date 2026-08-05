@@ -31,6 +31,11 @@
   - 帮我比较两个板块的资金持续性。
   - 为我的关注列表生成今日风险提示。
 - 先用后端规则和模板实现，后续接 LLM。
+- 建立 AI 调用基本链路：
+  - `User Goal -> Planner -> Tool Calling -> Memory Retrieval -> LLM -> Human Review`。
+  - 所有 AI 输出必须带来源、证据等级、不确定性和待验证问题。
+- 新增服务端 `Ask AI` 接口，前端不保存模型 API Key。
+- 记录 token、延迟、工具调用、fallback 和用户采纳/修改行为。
 
 ## Phase 3: MCP 工具层
 
@@ -48,6 +53,14 @@
   - `save_decision_note`
   - `generate_research_report`
 - 让桌面 AI 助手可以直接调用你的平台数据。
+- 前端不直接调用 MCP；MCP 只存在于后端 provider、Agent 或定时任务层。
+- 为每个 MCP tool 定义：
+  - 输入 schema。
+  - 输出 schema。
+  - 超时策略。
+  - 缓存策略。
+  - 降级 fallback。
+  - 评测样例。
 
 ## Phase 4: 资料库与记忆
 
@@ -58,6 +71,13 @@
   - 当时为什么关注。
   - 后来结果如何。
   - 哪些判断模式经常有效或失效。
+- 明确 RAG 优先于微调：
+  - 新闻、公告、财报和电话会议高频变化，必须保留来源。
+  - 微调只用于后期报告风格稳定化或小模型字段抽取。
+- 建立 Evidence Store：
+  - 保存原文链接、摘要、结构化字段、来源、时间和证据等级。
+- 建立 User Memory：
+  - 保存用户确认后的研究笔记、关注理由、假设、反证和复盘结果。
 
 ## Phase 5: 多 Agent
 
@@ -66,3 +86,34 @@
 - Stock Agent：个股画像和异动解释。
 - Risk Agent：风险提示和仓位提醒。
 - Report Agent：把证据、图表、观点整理成报告。
+- Orchestrator Agent：识别用户意图，决定进入 Capture、Connect、Compare、Conclude、Commit、Check 哪个阶段。
+- 每个 Agent 都要具备：
+  - 明确输入。
+  - 明确输出 schema。
+  - 可调用工具白名单。
+  - 失败降级方式。
+  - 可观测日志。
+  - 评测样本。
+
+## Phase 6: AI 评测与产品化运营
+
+- 建立 Golden Set：
+  - 新闻、公告、财报、电话会议、研报观点、行情异动、用户笔记。
+- 离线评测：
+  - 信息抽取准确率。
+  - 证据追溯率。
+  - 产业链路径合理率。
+  - schema 通过率。
+  - 风险边界合规率。
+- 在线评测：
+  - 用户保存率。
+  - 用户修改率。
+  - 用户拒绝率。
+  - 用户继续追问率。
+  - 用户回到复盘率。
+- 建立 AI 成本看板：
+  - token 消耗。
+  - 单次请求成本。
+  - 平均延迟。
+  - fallback 触发率。
+  - 工具失败率。

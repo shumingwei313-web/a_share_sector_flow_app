@@ -1,11 +1,17 @@
 const chartColors = ["#d33f49", "#147d64", "#2563eb", "#b97800", "#7c3aed", "#07879b", "#e05d23", "#334155"];
 const demoTimes = ["09:30", "09:45", "10:00", "10:15", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "14:45", "15:00"];
 const demoRows = [
-  ["机器人", "BK0740", 93, 48.6, 1264, 2.41, 3.28, [2.8, 8, 13, 20, 25, 29, 31, 28, 35, 41, 49, 46, 48.6]],
-  ["半导体", "BK1036", 88, 36.2, 1548, 1.94, 2.16, [1.2, 5, 11, 16, 18, 24, 28, 26, 31, 38, 42, 39, 36.2]],
-  ["通信设备", "BK0448", 82, 28.4, 882, 1.82, 2.42, [0, 3, 9, 12, 17, 20, 23, 18, 25, 30, 35, 32, 28.4]],
+  ["电子", "BK1201", 96, 334.9, 6148, 1.36, 5.24, [12, 46, 92, 138, 165, 218, 246, 232, 268, 295, 323, 318, 334.9]],
+  ["通信设备", "BK0448", 91, 222.6, 1911, 1.42, 5.31, [8, 32, 78, 112, 140, 166, 178, 171, 196, 209, 228, 219, 222.6]],
+  ["电网设备", "BK0457", 89, 68.4, 1260, 1.18, 3.59, [3, 9, 18, 25, 32, 41, 46, 43, 51, 58, 66, 63, 68.4]],
+  ["半导体", "BK1036", 88, 61.4, 1548, 1.04, 2.47, [1.2, 7, 15, 22, 28, 36, 41, 39, 48, 55, 64, 59, 61.4]],
+  ["机器人", "BK0740", 84, 48.6, 1264, 2.41, 3.28, [2.8, 8, 13, 20, 25, 29, 31, 28, 35, 41, 49, 46, 48.6]],
+  ["人工智能", "BK0800", 83, 52.4, 1886, 1.31, 4.18, [2, 10, 19, 25, 34, 39, 43, 41, 47, 52, 56, 51, 52.4]],
+  ["软件开发", "BK0737", 78, 28.1, 1094, 1.12, 2.66, [0, 4, 9, 13, 17, 22, 24, 21, 25, 31, 34, 30, 28.1]],
+  ["光伏设备", "BK1031", 77, 33.8, 706, 1.46, 2.93, [-1, 2, 8, 12, 17, 21, 20, 18, 24, 29, 34, 31, 33.8]],
+  ["有色金属", "BK0478", 73, 18.6, 986, 1.09, 1.38, [-2, 1, 5, 8, 12, 15, 13, 12, 16, 20, 22, 19, 18.6]],
+  ["新能源车", "BK0900", 69, 12.7, 842, 0.98, 0.86, [-1, 0, 4, 7, 9, 11, 10, 8, 12, 14, 16, 13, 12.7]],
   ["证券", "BK0473", 67, 9.3, 642, 1.18, 0.42, [-2, -5, -3, 1, 5, 8, 6, 4, 7, 11, 14, 12, 9.3]],
-  ["光伏设备", "BK1031", 61, -12.4, 706, 1.46, -0.82, [-1, -3, -5, -4, -8, -10, -9, -13, -15, -11, -9, -10, -12.4]],
   ["医药商业", "BK1040", 54, -21.6, 428, 1.67, -1.26, [-2, -4, -7, -9, -12, -14, -16, -15, -18, -22, -25, -23, -21.6]],
 ];
 
@@ -53,12 +59,26 @@ let marketIndex = {
   flow: demoTimes.map((time, index) => ({ time, value: [-0.32, -0.18, 0.04, 0.16, 0.25, 0.31, 0.22, 0.18, 0.28, 0.34, 0.29, 0.21, 0.08][index] })),
 };
 const demoHotStocks = [
-  { rank: 1, code: "600584", name: "长电科技", price: 38.6, change: 6.18, netInflow: 12.4 },
-  { rank: 2, code: "002156", name: "通富微电", price: 29.2, change: 8.08, netInflow: 23.3 },
-  { rank: 3, code: "600438", name: "通威股份", price: 21.5, change: 10.02, netInflow: 3.8 },
-  { rank: 4, code: "002371", name: "北方华创", price: 402.8, change: 4.48, netInflow: 15.6 },
-  { rank: 5, code: "300274", name: "阳光电源", price: 88.7, change: 3.59, netInflow: 9.6 },
-  { rank: 6, code: "688012", name: "中微公司", price: 168.2, change: 2.4, netInflow: 6.8 },
+  { rank: 1, code: "300308", name: "中际旭创", price: 238.6, change: 10.01, netInflow: 42.8 },
+  { rank: 2, code: "002384", name: "东山精密", price: 34.2, change: 10.0, netInflow: 43.3 },
+  { rank: 3, code: "601138", name: "工业富联", price: 58.4, change: 7.21, netInflow: 32.6 },
+  { rank: 4, code: "300502", name: "新易盛", price: 176.8, change: 12.2, netInflow: 31.4 },
+  { rank: 5, code: "002156", name: "通富微电", price: 29.2, change: 8.08, netInflow: 23.3 },
+  { rank: 6, code: "600584", name: "长电科技", price: 38.6, change: 6.18, netInflow: 12.4 },
+  { rank: 7, code: "002371", name: "北方华创", price: 402.8, change: 4.48, netInflow: 15.6 },
+  { rank: 8, code: "300274", name: "阳光电源", price: 88.7, change: 3.59, netInflow: 9.6 },
+  { rank: 9, code: "600438", name: "通威股份", price: 21.5, change: 10.02, netInflow: 3.8 },
+  { rank: 10, code: "688012", name: "中微公司", price: 168.2, change: 2.4, netInflow: 6.8 },
+  { rank: 11, code: "002463", name: "沪电股份", price: 48.5, change: 10.0, netInflow: 10.0 },
+  { rank: 12, code: "002916", name: "深南电路", price: 131.6, change: 6.69, netInflow: 8.2 },
+  { rank: 13, code: "603893", name: "瑞芯微", price: 187.4, change: 10.0, netInflow: 11.5 },
+  { rank: 14, code: "688256", name: "寒武纪", price: 812.6, change: 5.6, netInflow: 9.9 },
+  { rank: 15, code: "000063", name: "中兴通讯", price: 46.8, change: 7.51, netInflow: 31.9 },
+  { rank: 16, code: "300124", name: "汇川技术", price: 74.3, change: 2.8, netInflow: 5.2 },
+  { rank: 17, code: "600406", name: "国电南瑞", price: 28.9, change: 4.2, netInflow: 8.8 },
+  { rank: 18, code: "002896", name: "中大力德", price: 47.2, change: 5.4, netInflow: 5.8 },
+  { rank: 19, code: "688041", name: "海光信息", price: 146.5, change: 3.9, netInflow: 5.7 },
+  { rank: 20, code: "600522", name: "中天科技", price: 18.6, change: 4.66, netInflow: 7.8 },
 ];
 const captureTypes = [
   ["all", "全部"],
@@ -371,6 +391,13 @@ function getFallbackConcepts() {
     有色金属: ["小金属概念", "黄金概念", "稀缺资源", "铜", "锂电池"],
     工业金属: ["铜", "铝", "小金属概念", "稀缺资源"],
     黄金: ["黄金概念", "贵金属", "避险资产"],
+    电子: ["通信技术", "物联网", "国产芯片", "PCB", "5G概念", "存储芯片", "苹果概念"],
+    电网设备: ["特高压", "智能电网", "储能概念", "柔性直流", "电力物联网"],
+    光伏设备: ["光伏概念", "储能概念", "逆变器", "HJT电池", "TOPCon电池"],
+    医药商业: ["创新药", "医药商业", "医疗服务", "CRO", "中药", "医疗器械"],
+    人工智能: ["AI应用", "算力概念", "数据要素", "大模型", "云计算", "智能体"],
+    软件开发: ["信创", "AI应用", "数据要素", "网络安全", "金融科技", "工业软件"],
+    新能源车: ["固态电池", "锂电池", "汽车零部件", "智能驾驶", "一体化压铸", "充电桩"],
   };
   return conceptMap[selectedSector.name] || [selectedSector.name, "资金活跃", "趋势主线"];
 }
@@ -885,7 +912,7 @@ async function loadHotStocks() {
     renderStocks();
     renderAiBrief();
     renderReport();
-    $("#hot-update-time").textContent = "演示数据 · 9/12/20";
+    $("#hot-update-time").textContent = "定时更新 · 9/12/20";
   }
 }
 
@@ -1005,7 +1032,7 @@ function getResearchModuleData(key) {
     commit: {
       eyebrow: "05 COMMIT",
       title: "记录：保留当时为什么这样想",
-      subtitle: "保存观察、证据、疑问、置信度和风险。平台最重要的资产不是 AI 总结，而是你的研究过程。",
+      subtitle: "保存观察、证据、疑问、置信度和风险。平台最重要的资产，是可回看的判断过程。",
       kpis: [
         ["开放笔记", "0 条", "下一步本地存储"],
         ["当前对象", selectedSector.name, concept],
@@ -1063,6 +1090,32 @@ function getResearchModuleData(key) {
         ["摘要", "市场情绪", "资金、指数、热股榜", "可生成"],
         ["研究", "主题与事件", "产业链传导、公司受益、预期差", "待接入"],
         ["复盘", "昨日判断", "旧笔记结果回看", "待本地存储"],
+      ],
+    },
+    games: {
+      eyebrow: "GAME LAB",
+      title: "游戏实验室",
+      subtitle: "收纳独立交互实验，展示全屏 Canvas、键鼠控制、移动端触控和游戏 HUD 的前端实现能力。",
+      kpis: [
+        ["已收录", "2 个", "独立 HTML 游戏"],
+        ["交互类型", "Canvas", "键鼠 / 触控"],
+        ["部署路径", "/games", "GitHub / Vercel / EdgeOne"],
+        ["定位", "作品展示", "与研究主站分离"],
+      ],
+      links: [
+        ["ARCADE", "霓虹贪吃蛇", "赛博风格的全屏蛇类生存游戏，包含排行榜、小地图、触控摇杆和加速机制。", "games/neon-serpent.html"],
+        ["SHOOTER", "星云突击", "太空射击游戏，包含波次、生命值、升级、Boss 和沉浸式 HUD。", "games/nebula-strike.html"],
+        ["INDEX", "游戏入口页", "两个游戏的独立展示页，适合直接分享给他人试玩。", "games/index.html"],
+      ],
+      cards: [
+        ["展示重点", "完整交互", "每个游戏都是独立页面，打开即可全屏体验。"],
+        ["适配范围", "桌面与移动端", "保留原游戏的键鼠、触控和安全区适配。"],
+        ["更新方式", "跟随主站部署", "提交到 GitHub 后，Vercel 与 EdgeOne 会随主站一起更新。"],
+      ],
+      steps: [
+        ["入口", "主站导航", "左侧游戏实验室进入", "已接入"],
+        ["页面", "独立游戏", "/games/neon-serpent.html 与 /games/nebula-strike.html", "已加入"],
+        ["分享", "线上访问", "部署后可直接复制游戏链接", "待推送"],
       ],
     },
   };
@@ -1195,7 +1248,7 @@ function renderCaptureWorkbench() {
       <p>${selected.nextAction}</p>
     </section>
     <div class="capture-actions">
-      <button type="button" data-capture-action="agent">AI 整理证据</button>
+      <button type="button" data-capture-action="agent">整理证据</button>
       <button type="button" data-capture-action="chain">加入研究链</button>
       <button type="button" data-capture-action="review">标记待研判</button>
       <button type="button" data-capture-action="ignore">忽略噪音</button>
@@ -1235,7 +1288,7 @@ function renderCaptureWorkbench() {
       if (!item) return;
       if (button.dataset.captureAction === "agent") {
         openAiAgent({
-          title: "AI 整理证据",
+          title: "整理证据",
           presetQuestion: `请基于这条捕捉信息，按研究闭环整理：发生了什么、影响哪些行业、产业链如何传导、相关公司、证据强弱、待验证问题、风险提示。\n\n标题：${item.title}\n摘要：${item.summary}`,
           extraContext: { captureItem: item, workflowStep: "capture" },
         });
@@ -1251,6 +1304,7 @@ function renderCaptureWorkbench() {
 function renderResearchModule() {
   if (activeWorkspaceModule === "overview") return;
   const data = getResearchModuleData(activeWorkspaceModule);
+  document.querySelector(".primary-action").textContent = activeWorkspaceModule === "games" ? "打开游戏入口" : "+ 开始研究";
   $("#module-eyebrow").textContent = data.eyebrow;
   $("#module-title").textContent = data.title;
   $("#module-subtitle").textContent = data.subtitle;
@@ -1268,6 +1322,16 @@ function renderResearchModule() {
       <p>${body}</p>
     </article>
   `).join("");
+  if (data.links?.length) {
+    $("#module-cards").innerHTML = data.links.map(([label, title, body, href]) => `
+      <a class="module-card module-link-card" href="${href}">
+        <span>${label}</span>
+        <strong>${title}</strong>
+        <p>${body}</p>
+        <em>打开</em>
+      </a>
+    `).join("");
+  }
   $("#module-panel-title").textContent = `${data.title}链路`;
   $("#module-timeline").innerHTML = data.steps.map(([time, title, body, status]) => `
     <article class="timeline-item">
@@ -1302,6 +1366,10 @@ function setupSidebarNavigation() {
     button.onclick = () => switchWorkspaceModule(button.dataset.module);
   });
   document.querySelector(".primary-action").onclick = () => {
+    if (activeWorkspaceModule === "games") {
+      window.location.href = "games/index.html";
+      return;
+    }
     if (activeWorkspaceModule !== "capture") {
       switchWorkspaceModule("capture");
       return;
@@ -1410,8 +1478,8 @@ function toggleLanguage() {
   document.documentElement.lang = currentLanguage === "zh" ? "zh-CN" : "en";
   $("#language-btn").textContent = currentLanguage === "zh" ? "文" : "EN";
   document.querySelector(".brand-subtitle").textContent = currentLanguage === "zh"
-    ? "持续追踪投资逻辑，而不是追逐股价。把事件、产业链、公司和个人判断沉淀成可复盘的研究链。"
-    : "Track investment logic instead of chasing prices. Turn events, supply chains, companies and your own reasoning into reviewable research memory.";
+    ? "记录市场情绪、产业链线索与个人判断，把每日观察沉淀成可复盘的研究资产。"
+    : "Track market sentiment, industry signals, and your own research trail in one reviewable workspace.";
   hideActionPopover();
 }
 
@@ -1441,9 +1509,9 @@ function showResearchCalendar() {
 
 function showNotifications() {
   const notices = [
-    ["系统", "AKShare 数据源接入规格已建立，等待实现 Python Data Service。"],
-    ["搜索", "A 股证券目录检索已接入 stock-sdk 搜索工具。"],
-    ["AI", "AI Agent 需要 OPENAI_API_KEY 与价格参数后启用真实计费。"],
+    ["系统", "行情、热股与捕捉信息已进入缓存链路，异常时自动回退到可展示样例。"],
+    ["搜索", "证券目录、板块、热股和公司快照可在顶部统一检索。"],
+    ["研究助理", "证据检索链路已接入，后续可配置模型服务生成结构化答复。"],
   ];
   showActionPopover($("#notification-btn"), `
     <div class="popover-head">
@@ -1455,9 +1523,9 @@ function showNotifications() {
 }
 
 function openAiAgent(options = {}) {
-  const { title = "询问 AI", presetQuestion = "", extraContext = {} } = options;
+  const { title = "研究助理", presetQuestion = "", extraContext = {} } = options;
   showUtilityModal({
-    eyebrow: "FINANCIAL AGENT",
+    eyebrow: "RESEARCH ASSISTANT",
     title,
     body: `
       <form id="ai-agent-form" class="ai-agent-form">
@@ -1465,7 +1533,7 @@ function openAiAgent(options = {}) {
         <button type="submit">发送问题</button>
       </form>
       <div id="ai-agent-result" class="ai-agent-result">
-        <p>后端会按 token 统计输入和输出。未配置 API Key 时只显示计费接入状态。</p>
+        <p>系统会先检索当前页面、捕捉信息流、市场概览和热股榜，再生成结构化回答。未配置模型服务时，会返回证据整理结果。</p>
       </div>
     `,
   });
@@ -1474,7 +1542,7 @@ function openAiAgent(options = {}) {
     const question = $("#ai-agent-question").value.trim();
     if (!question) return;
     const result = $("#ai-agent-result");
-    result.innerHTML = "<p>正在调用金融 Agent...</p>";
+    result.innerHTML = "<p>正在整理证据...</p>";
     try {
       const response = await fetch(`${API_BASE}/api/agent/query`, {
         method: "POST",
@@ -1491,20 +1559,45 @@ function openAiAgent(options = {}) {
         }),
       });
       const data = await response.json();
+      const evidence = data.rag?.evidence || [];
       result.innerHTML = `
-        <strong>${data.configured ? "AI Agent 已响应" : "AI Agent 待配置"}</strong>
-        <p>${data.answer}</p>
+        <strong>${data.configured ? "研究助理已响应" : "待配置模型服务"}</strong>
+        <pre class="ai-answer">${escapeHtml(data.answer || "")}</pre>
+        <div class="rag-evidence">
+          <strong>命中证据</strong>
+          ${evidence.length ? evidence.slice(0, 5).map((item, index) => `
+            <article>
+              <span>${index + 1}</span>
+              <div>
+                <b>${escapeHtml(item.title || "未命名证据")}</b>
+                <small>${escapeHtml(item.type || "证据")} · ${escapeHtml(item.source || "unknown")} · 置信度 ${item.confidence || "-"}</small>
+              </div>
+            </article>
+          `).join("") : "<p>暂无命中证据。</p>"}
+        </div>
         <div class="token-meter">
-          <span>模型：${data.model}</span>
+          <span>请求：${data.traceId || "-"}</span>
+          <span>引擎：${data.provider || "model"} / ${data.model}</span>
           <span>输入 ${data.usage.inputTokens} tokens</span>
           <span>输出 ${data.usage.outputTokens} tokens</span>
+          <span>延迟 ${data.observability?.latencyMs || 0} ms</span>
+          <span>${data.observability?.fallbackUsed ? "已降级" : "正常调用"}</span>
           <span>估算费用：${data.billing.currency} ${data.billing.estimatedCost}</span>
         </div>
       `;
     } catch (_) {
-      result.innerHTML = "<p>AI Agent 暂不可用，请检查服务和 API Key。</p>";
+      result.innerHTML = "<p>研究助理暂不可用，请稍后重试。</p>";
     }
   };
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function setupUtilityActions() {
@@ -1563,7 +1656,7 @@ async function loadMarketData() {
     render();
     await loadStocks(selectedSector);
   } catch (_) {
-    $("#data-source").textContent = "演示数据";
+    $("#data-source").textContent = "缓存数据";
     $("#data-source").className = "source-badge demo";
     $("#data-time").textContent = "接口不可用，已降级";
   } finally {
