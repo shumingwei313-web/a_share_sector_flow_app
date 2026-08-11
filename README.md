@@ -126,6 +126,16 @@ npm run check
 
 质量检查覆盖核心文件、脚本语法、测试、架构护栏、页面引用和前端资源完整性。
 
+## AI Harness
+
+研究助理通过服务端接口接入 OpenAI-compatible 模型。默认没有配置 API Key 时会返回 dry-run 证据整理结果；配置模型后，会基于当前页面上下文和 RAG 证据包生成结构化研究回答。
+
+配置方式见：
+
+```text
+docs/AI_MODEL_SETUP.md
+```
+
 ## 部署
 
 GitHub `main` 分支作为代码源。线上展示通过 Vercel 部署，国内演示可使用 EdgeOne Pages 镜像。
