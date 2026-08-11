@@ -1708,6 +1708,7 @@ function renderResearchModule() {
       <small>${note}</small>
     </article>
   `).join("");
+  $("#module-cards").classList.toggle("capture-card-grid", activeWorkspaceModule === "capture");
   $("#module-cards").innerHTML = data.cards.map(([label, title, body]) => `
     <article class="module-card">
       <span>${label}</span>

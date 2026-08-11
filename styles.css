@@ -1836,6 +1836,11 @@ h3 {
   gap: 12px;
 }
 
+.module-card-grid.capture-card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .evidence-store-workbench,
 .research-chain-workbench {
   border: 1px solid var(--line);
@@ -2118,6 +2123,32 @@ a.module-card:hover {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.capture-card-grid .module-card {
+  min-height: 104px;
+  padding: 11px 12px;
+}
+
+.capture-card-grid .module-card span {
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.capture-card-grid .module-card strong {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.capture-card-grid .module-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .module-link-card em {
@@ -3137,6 +3168,10 @@ a.module-card:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .module-card-grid.capture-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .agent-lane {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -3200,6 +3235,7 @@ a.module-card:hover {
   .detail-grid,
   .module-kpis,
   .module-card-grid,
+  .module-card-grid.capture-card-grid,
   .agent-lane,
   .agent-io-grid {
     grid-template-columns: 1fr;
