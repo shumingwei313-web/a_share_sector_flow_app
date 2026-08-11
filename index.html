@@ -17,26 +17,23 @@
       </div>
 
       <nav class="sidebar-nav" aria-label="工作区">
-        <p>研究闭环</p>
+        <p>研究工作台</p>
         <button class="active" data-module="overview"><span>□</span>总览</button>
         <button data-module="capture"><span>⌕</span>捕捉<small>01</small></button>
-        <button data-module="connect"><span>⌘</span>连接<small>02</small></button>
-        <button data-module="compare"><span>◉</span>比较<small>03</small></button>
-        <button data-module="conclude"><span>✦</span>判断<small>04</small></button>
-        <button data-module="commit"><span>▣</span>记录<small>05</small></button>
-        <button data-module="check"><span>⌬</span>复盘<small>06</small></button>
+        <button data-module="connect"><span>▤</span>资料库<small>02</small></button>
+        <button data-module="conclude"><span>✦</span>研究链<small>03</small></button>
         <button data-module="daily"><span>▦</span>研究日报</button>
       </nav>
 
       <section class="sidebar-watch">
         <div>
-          <p>当前研究链</p>
+          <p>研究资产</p>
           <button aria-label="添加关注产业">+</button>
         </div>
-        <span><i></i>事件</span>
-        <span><i class="orange"></i>产业链</span>
-        <span><i class="blue"></i>公司</span>
-        <span><i></i>笔记与复盘</span>
+        <span><i></i>研究任务</span>
+        <span><i class="orange"></i>证据库</span>
+        <span><i class="blue"></i>假设</span>
+        <span><i></i>复盘</span>
       </section>
     </aside>
 
@@ -75,7 +72,7 @@
         </div>
       </header>
 
-      <header class="topbar">
+      <header id="overview-hero" class="topbar">
         <section class="brand-block">
           <h1>情绪之道</h1>
           <p class="brand-subtitle">记录市场情绪、产业链线索与个人判断，把每日观察沉淀成可复盘的研究资产。</p>
@@ -342,6 +339,7 @@
           <button class="primary-action" type="button">+ 开始研究</button>
         </div>
 
+        <section id="agent-orchestrator" class="agent-orchestrator" aria-label="Agent 分工编排"></section>
         <div id="module-kpis" class="module-kpis"></div>
         <div id="module-cards" class="module-card-grid"></div>
         <section class="module-panel">
@@ -351,6 +349,8 @@
           </div>
           <div id="module-timeline" class="module-timeline"></div>
         </section>
+        <section id="evidence-store-workbench" class="evidence-store-workbench" hidden></section>
+        <section id="research-chain-workbench" class="research-chain-workbench" hidden></section>
         <section id="capture-workbench" class="capture-workbench" hidden>
           <div class="capture-toolbar">
             <div>
@@ -375,6 +375,44 @@
           </div>
         </section>
       </section>
+
+      <div id="research-task-modal" class="research-task-modal" hidden>
+        <div class="research-task-dialog" role="dialog" aria-modal="true" aria-labelledby="research-task-title">
+          <button id="research-task-close" class="modal-close" type="button" aria-label="关闭研究任务">×</button>
+          <p class="market-modal-eyebrow">START RESEARCH</p>
+          <h2 id="research-task-title">开始一条研究链</h2>
+          <p class="research-task-copy">先确认研究问题、对象和资料边界，再进入捕捉。这里是 human-in-the-loop 的第一个确认点。</p>
+          <label class="research-task-field">
+            <span>研究主题</span>
+            <input id="research-topic-input" type="text" value="电子板块资金流入是否有产业链事件支撑" />
+          </label>
+          <section class="research-task-section">
+            <span>研究对象</span>
+            <div class="research-task-options" data-task-group="object">
+              <button class="active" type="button" data-task-value="板块">板块</button>
+              <button type="button" data-task-value="概念">概念</button>
+              <button type="button" data-task-value="公司">公司</button>
+              <button type="button" data-task-value="事件">事件</button>
+            </div>
+          </section>
+          <section class="research-task-section">
+            <span>资料范围</span>
+            <div class="research-task-checks">
+              <label><input type="checkbox" value="新闻" checked /> 新闻</label>
+              <label><input type="checkbox" value="公告" checked /> 公告</label>
+              <label><input type="checkbox" value="财报" checked /> 财报</label>
+              <label><input type="checkbox" value="电话会议" /> 电话会议</label>
+              <label><input type="checkbox" value="研报观点" checked /> 研报观点</label>
+              <label><input type="checkbox" value="行情异动" checked /> 行情异动</label>
+            </div>
+          </section>
+          <div class="research-task-actions">
+            <button id="research-task-generate" type="button">生成研究提纲</button>
+            <button id="research-task-confirm" type="button">确认并进入捕捉</button>
+          </div>
+          <section id="research-outline-preview" class="research-outline-preview" aria-live="polite"></section>
+        </div>
+      </div>
 
       <div id="utility-modal" class="utility-modal" hidden>
         <div class="utility-dialog" role="dialog" aria-modal="true" aria-labelledby="utility-title">

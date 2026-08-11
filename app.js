@@ -37,6 +37,7 @@ let hotStocks = [];
 let currentReportType = "strategy";
 let activeConcepts = [];
 let activeWorkspaceModule = "overview";
+let activeResearchTask = null;
 let captureMarketFilter = "all";
 let currentLanguage = "zh";
 let searchTimer = null;
@@ -46,6 +47,8 @@ let lastHotStockSlot = "";
 const hotStockRefreshHours = [9, 12, 20];
 let captureFilter = "all";
 let selectedCaptureId = "cap-anomaly-001";
+const CAPTURE_STATE_STORAGE_KEY = "qingxuzhidao.captureState.v1";
+const RESEARCH_NOTE_STORAGE_KEY = "qingxuzhidao.researchNotes.v1";
 let marketOverview = [
   { name: "上证指数", code: "000001", subtitle: "000001.SH", value: 3809.66, change: -0.59, low: 3797.64, high: 3827.64, open: 3812.61, previousClose: 3832.26, turnover: 9522.6 },
   { name: "深证成指", code: "399001", subtitle: "399001.SZ", value: 13448.29, change: -0.96, low: 13380.12, high: 13551.48, open: 13512.18, previousClose: 13578.44, turnover: 12840.2 },
@@ -221,6 +224,65 @@ const formatIndexValue = (value) => Number(value || 0).toLocaleString("zh-CN", {
 });
 const getActiveConceptLabel = (separator = " · ") => activeConcepts.join(separator);
 const isConceptActive = (name) => activeConcepts.includes(name);
+
+const agentPipeline = [
+  {
+    key: "planner",
+    name: "Planner",
+    title: "任务规划",
+    input: "研究问题 / 对象",
+    output: "拆解任务与证据清单",
+    modules: ["capture", "connect", "conclude", "daily"],
+  },
+  {
+    key: "collector",
+    name: "Collector",
+    title: "信息捕捉",
+    input: "新闻、公告、财报、电话会、行情异动",
+    output: "原始信号流",
+    modules: ["capture"],
+  },
+  {
+    key: "retriever",
+    name: "Retriever",
+    title: "证据检索",
+    input: "Evidence Store / RAG",
+    output: "可引用证据包",
+    modules: ["connect", "conclude", "daily"],
+  },
+  {
+    key: "analyst",
+    name: "Analyst",
+    title: "研究判断",
+    input: "资金、人气、产业链、公司线索",
+    output: "假设与推理链",
+    modules: ["conclude", "daily"],
+  },
+  {
+    key: "critic",
+    name: "Critic",
+    title: "反证校验",
+    input: "假设、反证、风险约束",
+    output: "置信度与待验证问题",
+    modules: ["conclude"],
+  },
+  {
+    key: "writer",
+    name: "Writer",
+    title: "报告生成",
+    input: "证据包、研究链、复盘记录",
+    output: "研究日报草稿",
+    modules: ["daily"],
+  },
+  {
+    key: "memory",
+    name: "Memory",
+    title: "记忆沉淀",
+    input: "用户笔记、证据状态、复盘日期",
+    output: "个人研究资产",
+    modules: ["connect", "conclude", "daily"],
+  },
+];
 
 function updateConceptSelection(name, action = "add") {
   if (action === "remove") {
@@ -972,19 +1034,19 @@ function getResearchModuleData(key) {
       ],
     },
     connect: {
-      eyebrow: "02 CONNECT",
-      title: "连接：它会影响谁",
-      subtitle: "把事件连接到行业、产业链节点、上下游、公司和市场预期。连接阶段回答的是影响路径，而不是涨跌判断。",
+      eyebrow: "02 EVIDENCE STORE",
+      title: "资料库：证据与 RAG",
+      subtitle: "把捕捉到的新闻、公告、财报、电话会议和研报观点沉淀为 EvidenceRecord。后续 AI 回答只引用已保存证据，减少幻觉。",
       kpis: commonKpis,
       cards: [
-        ["影响行业", selectedSector.name, `当前从${selectedSector.name}出发，继续拆到主题、概念和产业链节点。`],
-        ["产业链节点", concept, "判断它处在上游、中游还是下游，以及利润会往哪一环传导。"],
-        ["相关公司", selectedStock?.name || topHot?.name || "等待个股数据", "把公司放到产业链位置里看，而不是只看涨幅。"],
+        ["EvidenceRecord", "结构化证据", "每条证据保留来源、时间、摘录、相关公司、支持观点、反证和可信度。"],
+        ["RAG 检索", concept, "先按研究主题、行业、公司和概念召回证据，再交给 AI 生成回答。"],
+        ["证据质量", selectedStock?.name || topHot?.name || "等待个股数据", "低质量来源只进入待验证区，不直接参与研究结论。"],
       ],
       steps: [
-        ["行业", "映射影响行业", selectedSector.name, "已选中"],
-        ["节点", "梳理上下游", "上游 -> 中游 -> 下游 -> 公司", "待自动化"],
-        ["预期", "连接市场预期", "人气、资金、新闻和财务指标", "待验证"],
+        ["入库", "保存原始证据", "来源、时间、摘要、定位和主题标签", "下一步"],
+        ["索引", "建立 RAG 检索", "关键词 + 主题 + 公司 + 向量召回", "待接入"],
+        ["校验", "证据质量分层", "S/A/B/D 来源分层与冲突检查", "待自动化"],
       ],
     },
     compare: {
@@ -1009,9 +1071,9 @@ function getResearchModuleData(key) {
       ],
     },
     conclude: {
-      eyebrow: "04 CONCLUDE",
-      title: "判断：形成可追溯假设",
-      subtitle: "生成可追溯的研究假设，而不是买卖指令。判断必须包含依据、不确定性、反证和待验证问题。",
+      eyebrow: "03 RESEARCH CHAIN",
+      title: "研究链：判断与复盘",
+      subtitle: "把资料库里的证据连接到产业链、公司和市场预期，比较支持与反证，形成可追溯、可复盘的研究假设。",
       kpis: [
         ["研究对象", selectedSector.name, concept],
         ["初步假设", selectedSector.netInflow > 0 ? "资金关注增强" : "资金动能不足", "需证据确认"],
@@ -1019,14 +1081,14 @@ function getResearchModuleData(key) {
         ["反证", "待补充", "财务和事件数据"],
       ],
       cards: [
-        ["假设", `${selectedSector.name}情绪升温`, `如果${concept}后续有公告、订单或业绩支撑，才可能从情绪线索升级为研究主线。`],
-        ["依据", "资金与人气", `净流入${formatMoney(selectedSector.netInflow)}，量比${selectedSector.volumeRatio.toFixed(2)}x。`],
-        ["不确定性", "基本面证据不足", "当前结论不能替代投资判断，只适合进入观察池。"],
+        ["影响路径", `${selectedSector.name} -> ${concept}`, "先描述事件如何传导到产业链节点和公司，不急着给结论。"],
+        ["支持与反证", "资金、人气、公告、财务", `当前行情证据：净流入${formatMoney(selectedSector.netInflow)}，量比${selectedSector.volumeRatio.toFixed(2)}x。`],
+        ["复盘规则", "保留当时为什么这样想", "每个判断都必须有原因、证据、反证、置信度和复盘日期。"],
       ],
       steps: [
-        ["结论", "写出假设", "一句话说明为什么关注", "待保存"],
-        ["证据", "列出支持与反对", "行情、资金、公告、财务、新闻", "待补充"],
-        ["验证", "定义观察变量", "未来看什么能证明或推翻它", "待记录"],
+        ["连接", "产业链传导", "事件 -> 行业 -> 概念 -> 公司", "待做"],
+        ["比较", "真影响还是情绪", "资金、价格、基本面证据和反证", "待判断"],
+        ["记录", "保存研究假设", "原因、证据、反证、置信度、复盘日期", "待保存"],
       ],
     },
     commit: {
@@ -1052,8 +1114,8 @@ function getResearchModuleData(key) {
     },
     check: {
       eyebrow: "06 CHECK",
-      title: "复盘：判断是否需要修正",
-      subtitle: "未来回看结果，判断哪些想法正确，哪些假设需要修正。复盘不是证明自己对，而是训练自己的研究系统。",
+      title: "记录复盘：保留并修正判断",
+      subtitle: "保存当时的原因、证据、反证和置信度。未来回看结果，判断哪些假设需要修正。",
       kpis: [
         ["开放假设", "0 条", "下一步保存笔记"],
         ["待复盘", "0 条", "本地存储后启用"],
@@ -1123,6 +1185,70 @@ function mapCaptureItemForUi(item) {
   };
 }
 
+function getSavedCaptureState() {
+  try {
+    return JSON.parse(localStorage.getItem(CAPTURE_STATE_STORAGE_KEY) || "{}");
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveCaptureState() {
+  const state = captureItems.reduce((acc, item) => {
+    if (item.status || item.evidenceStatus || item.updatedAt) {
+      acc[item.id] = {
+        status: item.status,
+        evidenceStatus: item.evidenceStatus,
+        updatedAt: item.updatedAt,
+      };
+    }
+    return acc;
+  }, {});
+  localStorage.setItem(CAPTURE_STATE_STORAGE_KEY, JSON.stringify(state));
+}
+
+function applySavedCaptureState() {
+  const saved = getSavedCaptureState();
+  captureItems = captureItems.map((item) => saved[item.id] ? { ...item, ...saved[item.id] } : item);
+}
+
+function getResearchNoteKey() {
+  return selectedSector?.code || selectedSector?.name || "default";
+}
+
+function getSavedResearchNotes() {
+  try {
+    return JSON.parse(localStorage.getItem(RESEARCH_NOTE_STORAGE_KEY) || "{}");
+  } catch (_) {
+    return {};
+  }
+}
+
+function getCurrentResearchNote() {
+  const savedNotes = getSavedResearchNotes();
+  const savedNote = savedNotes[getResearchNoteKey()];
+  if (savedNote) return savedNote;
+  return {
+    hypothesis: `${selectedSector.name}情绪升温是否有产业链事件支撑`,
+    reason: `当前${selectedSector.name}主力净流入${formatMoney(selectedSector.netInflow)}，信号为${selectedSector.signal}，但还需要新闻、公告、财报或电话会议验证。`,
+    counterEvidence: "如果后续资金回落、公告无法支撑订单或业绩，或同类概念热度扩散但龙头走弱，需要下调置信度。",
+    confidence: "中低",
+    reviewDate: "",
+    savedAt: "",
+  };
+}
+
+function saveCurrentResearchNote(note) {
+  const savedNotes = getSavedResearchNotes();
+  savedNotes[getResearchNoteKey()] = {
+    ...note,
+    sectorName: selectedSector.name,
+    sectorCode: selectedSector.code,
+    savedAt: new Date().toLocaleString("zh-CN", { hour12: false }),
+  };
+  localStorage.setItem(RESEARCH_NOTE_STORAGE_KEY, JSON.stringify(savedNotes));
+}
+
 async function loadCaptureFeed() {
   try {
     const response = await fetch(`${API_BASE}/api/capture?limit=30`);
@@ -1130,12 +1256,38 @@ async function loadCaptureFeed() {
     const data = await response.json();
     if (data.items?.length) {
       captureItems = data.items.map(mapCaptureItemForUi);
+      applySavedCaptureState();
       selectedCaptureId = captureItems[0]?.id || selectedCaptureId;
       renderCaptureWorkbench();
     }
   } catch (_) {
     renderCaptureWorkbench();
   }
+}
+
+function refreshResearchWorkbenches() {
+  renderCaptureWorkbench();
+  renderEvidenceStoreWorkbench();
+  renderResearchChainWorkbench();
+}
+
+function updateCaptureItemStatus(item, action) {
+  const actionMap = {
+    chain: "已加入研究链",
+    review: "待研判",
+    ignore: "已忽略",
+  };
+  item.status = actionMap[action] || item.status;
+  item.evidenceStatus = action === "chain"
+    ? "已入库"
+    : action === "review"
+      ? "待验证"
+      : action === "ignore"
+        ? "已忽略"
+        : item.evidenceStatus;
+  item.updatedAt = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  saveCaptureState();
+  refreshResearchWorkbenches();
 }
 
 function renderCaptureWorkbench() {
@@ -1268,16 +1420,283 @@ function renderCaptureWorkbench() {
         });
         return;
       }
-      const actionMap = { chain: "已加入研究链", review: "待研判", ignore: "已忽略" };
-      item.status = actionMap[button.dataset.captureAction] || item.status;
-      renderCaptureWorkbench();
+      updateCaptureItemStatus(item, button.dataset.captureAction);
     };
+  });
+}
+
+function getEvidenceRecords() {
+  const statusScore = { "已入库": 0, "待验证": 1, "观察": 2, "已忽略": 3 };
+  return captureItems
+    .filter((item) => item.status !== "已忽略")
+    .map((item, index) => ({
+    id: `EV-${String(index + 1).padStart(3, "0")}`,
+    title: item.title,
+    claim: item.summary,
+    source: item.provider || item.source || "公开资料",
+    type: item.typeLabel || "信号",
+    sector: item.sector || selectedSector.name,
+    companies: item.companies?.slice(0, 3) || [],
+    confidence: item.priority === "高" ? 82 : item.priority === "中" ? 68 : 52,
+    status: item.evidenceStatus || (item.status === "已加入研究链" ? "已入库" : item.status === "待研判" ? "待验证" : "观察"),
+    updatedAt: item.updatedAt || item.time,
+  }))
+    .sort((a, b) => (statusScore[a.status] ?? 9) - (statusScore[b.status] ?? 9))
+    .slice(0, 8);
+}
+
+function renderEvidenceStoreWorkbench() {
+  const workbench = $("#evidence-store-workbench");
+  if (!workbench) return;
+  const isEvidenceStore = activeWorkspaceModule === "connect";
+  workbench.hidden = !isEvidenceStore;
+  if (!isEvidenceStore) return;
+
+  const records = getEvidenceRecords();
+  const sourceCount = new Set(records.map((record) => record.source)).size;
+  const companyCount = new Set(records.flatMap((record) => record.companies)).size;
+  workbench.innerHTML = `
+    <div class="section-title">
+      <h3>Evidence Store</h3>
+      <span>把资料变成可引用、可追溯、可检索的证据</span>
+    </div>
+    <div class="evidence-store-grid">
+      <article class="evidence-rag-panel">
+        <p class="eyebrow">RAG PREVIEW</p>
+        <h3>询问资料库</h3>
+        <label>
+          <span>问题</span>
+          <textarea readonly>基于已入库证据，${selectedSector.name}当前资金流入是否有真实事件支撑？请列出支持证据、反证和待验证问题。</textarea>
+        </label>
+        <div class="evidence-rag-stats">
+          <span><b>${records.length}</b>条证据</span>
+          <span><b>${sourceCount}</b>个来源</span>
+          <span><b>${companyCount}</b>家公司</span>
+        </div>
+      </article>
+      <div class="evidence-record-list">
+        ${records.map((record) => `
+          <article class="evidence-record">
+            <div>
+              <span>${record.id} · ${record.type}</span>
+              <strong>${record.title}</strong>
+              <p>${record.claim}</p>
+              <small>${record.source} · ${record.sector}${record.companies.length ? ` · ${record.companies.join("、")}` : ""}</small>
+              <small>更新 ${record.updatedAt}</small>
+            </div>
+            <em>${record.status}</em>
+            <b>${record.confidence}</b>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderResearchChainWorkbench() {
+  const workbench = $("#research-chain-workbench");
+  if (!workbench) return;
+  const isResearchChain = activeWorkspaceModule === "conclude";
+  workbench.hidden = !isResearchChain;
+  if (!isResearchChain) return;
+
+  const records = getEvidenceRecords();
+  const supporting = records.filter((record) => record.status === "已入库").length;
+  const pending = records.filter((record) => record.status === "待验证").length;
+  const note = getCurrentResearchNote();
+  const confidenceOptions = ["低", "中低", "中", "中高", "高"];
+  workbench.innerHTML = `
+    <div class="section-title">
+      <h3>研究链状态</h3>
+      <span>从信号到假设，再到复盘记录</span>
+    </div>
+    <div class="research-chain-layout">
+      <article class="research-hypothesis-card">
+        <p class="eyebrow">HYPOTHESIS</p>
+        <h3>${escapeHtml(note.hypothesis)}</h3>
+        <p>${escapeHtml(note.reason)}</p>
+        <div>
+          <span>支持证据 ${supporting}</span>
+          <span>待验证 ${pending}</span>
+          <span>置信度 ${escapeHtml(note.confidence)}</span>
+          <span>${note.reviewDate ? `复盘 ${escapeHtml(note.reviewDate)}` : "复盘待设置"}</span>
+        </div>
+      </article>
+      <form class="research-note-form" id="research-note-form">
+        <label>
+          <span>研究假设</span>
+          <textarea data-research-note="hypothesis" rows="2">${escapeHtml(note.hypothesis)}</textarea>
+        </label>
+        <label>
+          <span>为什么关注</span>
+          <textarea data-research-note="reason" rows="3">${escapeHtml(note.reason)}</textarea>
+        </label>
+        <label>
+          <span>反证与风险</span>
+          <textarea data-research-note="counterEvidence" rows="3">${escapeHtml(note.counterEvidence)}</textarea>
+        </label>
+        <div class="research-note-fields">
+          <label>
+            <span>置信度</span>
+            <select data-research-note="confidence">
+              ${confidenceOptions.map((option) => `<option value="${option}" ${option === note.confidence ? "selected" : ""}>${option}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>复盘日期</span>
+            <input type="date" data-research-note="reviewDate" value="${escapeHtml(note.reviewDate)}">
+          </label>
+        </div>
+        <div class="research-note-actions">
+          <button type="submit">保存研究记录</button>
+          <button type="button" id="ask-ai-research-note-btn">让 AI 整理</button>
+        </div>
+        <p class="research-note-meta">${note.savedAt ? `上次保存 ${escapeHtml(note.savedAt)}` : "尚未保存，当前为默认研究假设。"}</p>
+      </form>
+    </div>
+    <div class="research-chain-steps">
+      ${[
+        ["捕捉", "已从行情异动和信息流收集原始信号", "完成"],
+        ["资料库", "把高质量来源转为 EvidenceRecord", supporting ? "进行中" : "待做"],
+        ["比较判断", "比较支持证据、反证、资金和价格反应", note.confidence === "低" ? "待做" : "进行中"],
+        ["记录复盘", "保存原因、证据、反证、复盘日期", note.savedAt ? "已保存" : "待做"],
+      ].map(([title, body, status]) => `
+        <article>
+          <strong>${title}</strong>
+          <p>${body}</p>
+          <em>${status}</em>
+        </article>
+      `).join("")}
+    </div>
+  `;
+  bindResearchChainActions();
+}
+
+function getResearchNoteFormValue(name) {
+  return $(`[data-research-note="${name}"]`)?.value.trim() || "";
+}
+
+function bindResearchChainActions() {
+  $("#research-note-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveCurrentResearchNote({
+      hypothesis: getResearchNoteFormValue("hypothesis"),
+      reason: getResearchNoteFormValue("reason"),
+      counterEvidence: getResearchNoteFormValue("counterEvidence"),
+      confidence: getResearchNoteFormValue("confidence") || "中低",
+      reviewDate: getResearchNoteFormValue("reviewDate"),
+    });
+    renderResearchChainWorkbench();
+  });
+  $("#ask-ai-research-note-btn")?.addEventListener("click", () => {
+    const note = {
+      hypothesis: getResearchNoteFormValue("hypothesis"),
+      reason: getResearchNoteFormValue("reason"),
+      counterEvidence: getResearchNoteFormValue("counterEvidence"),
+      confidence: getResearchNoteFormValue("confidence") || "中低",
+      reviewDate: getResearchNoteFormValue("reviewDate"),
+    };
+    openAiAgent({
+      title: "整理研究链",
+      presetQuestion: `请基于下面的研究笔记，帮我整理成结构化研究链：假设、支持证据、反证、待验证问题、下一步动作。不要直接给买卖建议。\n\n研究对象：${selectedSector.name}\n研究假设：${note.hypothesis}\n为什么关注：${note.reason}\n反证与风险：${note.counterEvidence}\n置信度：${note.confidence}\n复盘日期：${note.reviewDate || "未设置"}`,
+      extraContext: {
+        researchNote: note,
+        evidenceRecords: getEvidenceRecords(),
+      },
+    });
+  });
+}
+
+function getAgentRunContext(moduleKey) {
+  const records = getEvidenceRecords();
+  const activeAgents = agentPipeline.filter((agent) => agent.modules.includes(moduleKey));
+  const primaryAgent = activeAgents[0] || agentPipeline[0];
+  const stateText = {
+    capture: "正在把公开信号转为可处理的任务输入",
+    connect: "正在把原始资料沉淀为可检索证据",
+    conclude: "正在把证据、反证和个人判断串成研究链",
+    daily: "正在把研究链生成可分享的日报草稿",
+  }[moduleKey] || "等待选择研究模块";
+  return {
+    primaryAgent,
+    activeAgents,
+    stateText,
+    evidenceCount: records.length,
+    memoryCount: Object.keys(getSavedResearchNotes()).length,
+  };
+}
+
+function renderAgentOrchestrator() {
+  const container = $("#agent-orchestrator");
+  if (!container) return;
+  if (activeWorkspaceModule === "overview") {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  const context = getAgentRunContext(activeWorkspaceModule);
+  const activeKeys = new Set(context.activeAgents.map((agent) => agent.key));
+  container.innerHTML = `
+    <div class="agent-orchestrator-head">
+      <div>
+        <p class="eyebrow">AGENT ORCHESTRATION</p>
+        <h3>${context.primaryAgent.title}</h3>
+        <span>${context.stateText}</span>
+      </div>
+      <button type="button" id="run-agent-plan-btn">生成执行计划</button>
+    </div>
+    <div class="agent-lane" aria-label="Agent 流水线">
+      ${agentPipeline.map((agent, index) => {
+        const active = activeKeys.has(agent.key);
+        return `
+          <article class="agent-card ${active ? "active" : ""}">
+            <small>${String(index + 1).padStart(2, "0")}</small>
+            <strong>${agent.name}</strong>
+            <span>${agent.title}</span>
+            <p>${agent.output}</p>
+          </article>
+        `;
+      }).join("")}
+    </div>
+    <div class="agent-io-grid">
+      <article>
+        <span>当前输入</span>
+        <strong>${context.primaryAgent.input}</strong>
+      </article>
+      <article>
+        <span>当前输出</span>
+        <strong>${context.primaryAgent.output}</strong>
+      </article>
+      <article>
+        <span>证据数</span>
+        <strong>${context.evidenceCount}</strong>
+      </article>
+      <article>
+        <span>记忆数</span>
+        <strong>${context.memoryCount}</strong>
+      </article>
+    </div>
+  `;
+  $("#run-agent-plan-btn")?.addEventListener("click", () => {
+    openAiAgent({
+      title: "生成 Agent 执行计划",
+      presetQuestion: `请按多 Agent 编排方式，为当前模块生成执行计划。要求包含：Planner 如何拆解任务、Collector/Retriever 调用哪些工具、Analyst 如何判断、Critic 如何找反证、Writer/Memory 如何交付和沉淀。\n\n当前模块：${getResearchModuleData(activeWorkspaceModule).title}\n当前板块：${selectedSector.name}\n当前证据数：${context.evidenceCount}\n当前研究记忆数：${context.memoryCount}`,
+      extraContext: {
+        activeWorkspaceModule,
+        agentPipeline,
+        evidenceRecords: getEvidenceRecords(),
+      },
+    });
   });
 }
 
 function renderResearchModule() {
   if (activeWorkspaceModule === "overview") return;
-  const data = getResearchModuleData(activeWorkspaceModule);
+  const data = { ...getResearchModuleData(activeWorkspaceModule) };
+  if (activeWorkspaceModule === "capture" && activeResearchTask) {
+    data.title = `捕捉：${activeResearchTask.topic}`;
+    data.subtitle = `对象：${activeResearchTask.objectType} · 资料范围：${activeResearchTask.sources.join("、") || "待选择"} · 创建时间：${activeResearchTask.createdAt}`;
+  }
   document.querySelector(".primary-action").textContent = "+ 开始研究";
   $("#module-eyebrow").textContent = data.eyebrow;
   $("#module-title").textContent = data.title;
@@ -1317,7 +1736,10 @@ function renderResearchModule() {
       <em>${status}</em>
     </article>
   `).join("");
+  renderAgentOrchestrator();
   renderCaptureWorkbench();
+  renderEvidenceStoreWorkbench();
+  renderResearchChainWorkbench();
 }
 
 function switchWorkspaceModule(moduleName) {
@@ -1326,6 +1748,7 @@ function switchWorkspaceModule(moduleName) {
     button.classList.toggle("active", button.dataset.module === moduleName);
   });
   const isOverview = moduleName === "overview";
+  $("#overview-hero").hidden = !isOverview;
   $("#overview-view").hidden = !isOverview;
   $("#research-module-view").hidden = isOverview;
   if (isOverview) {
@@ -1335,17 +1758,88 @@ function switchWorkspaceModule(moduleName) {
   }
 }
 
+function getResearchTaskPayload() {
+  const topic = $("#research-topic-input")?.value.trim() || `${selectedSector.name}是否有真实事件支撑`;
+  const objectType = document.querySelector("[data-task-group='object'] button.active")?.dataset.taskValue || "板块";
+  const sources = Array.from(document.querySelectorAll(".research-task-checks input:checked")).map((input) => input.value);
+  return { topic, objectType, sources };
+}
+
+function renderResearchOutline(payload = getResearchTaskPayload()) {
+  const preview = $("#research-outline-preview");
+  if (!preview) return;
+  const sourceText = payload.sources.length ? payload.sources.join("、") : "新闻、公告、财报、电话会议、研报观点、行情异动";
+  preview.innerHTML = `
+    <div>
+      <span>研究问题</span>
+      <strong>${payload.topic}</strong>
+      <small>${payload.objectType}研究 · 资料范围：${sourceText}</small>
+    </div>
+    <ol>
+      <li><b>捕捉</b><span>收集原始信号，保留来源、时间、对象和证据类型。</span></li>
+      <li><b>资料库</b><span>把有效材料沉淀为可检索证据，后续 RAG 只引用这里。</span></li>
+      <li><b>研究链</b><span>连接产业链、比较反证、形成假设，并保存可复盘记录。</span></li>
+      <li><b>研究日报</b><span>把结论、证据缺口和下一步动作整理成可分享摘要。</span></li>
+    </ol>
+  `;
+}
+
+function openResearchTaskModal() {
+  const modal = $("#research-task-modal");
+  if (!modal) return;
+  const input = $("#research-topic-input");
+  if (input && !activeResearchTask) {
+    input.value = `${selectedSector.name}资金流入是否有产业链事件支撑`;
+  }
+  renderResearchOutline();
+  modal.hidden = false;
+  input?.focus();
+  input?.select();
+}
+
+function closeResearchTaskModal() {
+  const modal = $("#research-task-modal");
+  if (modal) modal.hidden = true;
+}
+
+function setupResearchTaskModal() {
+  const modal = $("#research-task-modal");
+  if (!modal) return;
+  $("#research-task-close").onclick = closeResearchTaskModal;
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeResearchTaskModal();
+  });
+  document.querySelectorAll("[data-task-group='object'] button").forEach((button) => {
+    button.onclick = () => {
+      document.querySelectorAll("[data-task-group='object'] button").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      renderResearchOutline();
+    };
+  });
+  document.querySelectorAll(".research-task-checks input").forEach((input) => {
+    input.onchange = () => renderResearchOutline();
+  });
+  $("#research-topic-input").oninput = () => renderResearchOutline();
+  $("#research-task-generate").onclick = () => renderResearchOutline();
+  $("#research-task-confirm").onclick = () => {
+    activeResearchTask = {
+      ...getResearchTaskPayload(),
+      createdAt: new Date().toLocaleString("zh-CN", { hour12: false }),
+    };
+    closeResearchTaskModal();
+    switchWorkspaceModule("capture");
+    $("#capture-workbench")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+}
+
 function setupSidebarNavigation() {
   document.querySelectorAll(".sidebar-nav button").forEach((button) => {
     button.onclick = () => switchWorkspaceModule(button.dataset.module);
   });
   document.querySelector(".primary-action").onclick = () => {
-    if (activeWorkspaceModule !== "capture") {
-      switchWorkspaceModule("capture");
-      return;
-    }
-    $("#capture-workbench")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openResearchTaskModal();
   };
+  setupResearchTaskModal();
 }
 
 function renderSearchResults(items, query) {
@@ -1647,6 +2141,7 @@ updateClock();
 setupSidebarNavigation();
 setupGlobalSearch();
 setupUtilityActions();
+applySavedCaptureState();
 render();
 loadMarketData();
 loadHotStocks();
