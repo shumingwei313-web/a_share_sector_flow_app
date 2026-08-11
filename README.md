@@ -1,156 +1,161 @@
-# 情绪之道 MVP
+# 情绪之道 · Personal Research OS
 
-这是一个已部署到公网的个人投研平台 MVP，用来验证“板块情绪 + 主力资金流向曲线 + 板块内人气热股 + 风险提示”的产品形态。线上页面优先作为产品展示入口；本地启动只用于开发和调试。
+情绪之道是一个面向个人投资研究的市场情绪与证据链工作台。它聚合板块资金、热门概念、个股线索、事件、公告、财报和研究记录，帮助研究者把每日观察沉淀为可复盘的研究资产。
 
-## 打开方式
+> 本项目只用于研究辅助与产品原型展示，不提供投资建议，不替代独立判断。
 
-公开访问：
+## 在线访问
 
 ```text
 https://a-share-sector-flow-app.vercel.app/
 ```
 
-## 项目展示
+## 产品定位
 
-这个仓库同时作为我的个人项目主页。首页优先展示主项目「情绪之道」，另外两个小游戏作为独立作品入口，用来展示前端交互和视觉实现能力。
+个人投资研究中最容易丢失的不是结论，而是结论形成前的过程：当天发生了什么、影响哪些行业、产业链如何传导、哪些公司真正受益、哪些只是短期情绪。情绪之道的目标是把这些分散信息组织成一条可追踪、可验证、可复盘的研究链。
 
-- 主项目：情绪之道，个人 A 股情绪与研究工作台。
-- 其他项目：霓虹贪吃蛇，`/showcase/neon-serpent.html`。
-- 其他项目：星云突击，`/showcase/nebula-strike.html`。
+## 核心能力
 
-线上试玩：
+- 市场总览：展示 A 股核心指数、板块热度、资金净流入曲线、热门概念与热股线索。
+- 事件捕捉：沉淀新闻、公告、财报、电话会议、研报观点和行情异动。
+- 资料库：按公司、行业、主题和来源保存证据，保留时间戳与来源层级。
+- 研究链：把事件、证据、假设、反证、判断和复盘结果串联起来。
+- 研究日报：将每日重要变化整理成适合回顾的结构化记录。
+- 风险边界：区分事实、推断和观点，保留数据来源和不确定性说明。
+
+## 研究闭环
 
 ```text
-https://a-share-sector-flow-app.vercel.app/showcase/neon-serpent.html
-https://a-share-sector-flow-app.vercel.app/showcase/nebula-strike.html
+捕捉 Capture
+  -> 连接 Connect
+  -> 比较 Compare
+  -> 判断 Conclude
+  -> 记录 Record
+  -> 复盘 Review
 ```
 
-本地开发时才需要启动服务。最简单的方法：双击本目录中的 `启动网站.command`，然后访问 `http://127.0.0.1:4173`。项目已自带 Node.js 运行环境，启动后请保持终端窗口开启。
+每一步都保留原始证据和用户判断，避免只留下无法追溯的最终结论。
 
-如果使用系统 Node.js，需要 Node.js 18 或更高版本。在本目录运行：
+## Agent 架构
+
+项目借鉴多 Agent 研究流程，将研究任务拆成可观测、可回退的职责边界：
+
+| Agent | 职责 | 输出 |
+| --- | --- | --- |
+| Planner | 拆解研究问题，定义证据范围和交付格式 | 研究计划、问题清单 |
+| Collector | 获取行情、公告、新闻、财报、电话会议等材料 | 原始资料、来源记录 |
+| Retriever | 基于资料库检索相关证据 | 证据片段、引用来源 |
+| Analyst | 对事件、行业传导和公司影响进行分析 | 假设、影响路径 |
+| Critic | 寻找反证、风险和缺失信息 | 风险提示、待验证项 |
+| Writer | 生成日报、主题笔记和复盘记录 | 结构化研究输出 |
+| Memory | 保存历史判断和复盘结果 | 可回溯研究资产 |
+
+设计原则是“先事实、后判断；先证据、后结论；先保留过程、后生成报告”。
+
+## 数据与工具
+
+当前版本以公开行情接口和本地缓存为展示数据源，后续计划通过 AKShare 与 MCP 工具补齐更稳定的数据服务。
+
+```text
+Frontend
+  -> Node API Gateway
+  -> Data Source Adapters
+       -> Eastmoney public endpoints
+       -> AKShare Python service
+       -> MCP tools
+  -> Evidence Store
+  -> Agent / RAG Service
+```
+
+计划接入的数据类型：
+
+- 行情与资金：指数、板块、概念、个股资金流向、热股排行。
+- 公司资料：基本信息、市值、估值、换手率、日 K 与历史表现。
+- 公开资料：公告、财报、业绩预告、新闻、电话会议、研报观点。
+- 用户资料：关注列表、研究笔记、假设、复盘记录。
+
+## 项目结构
+
+```text
+.
+├── index.html                 # 前端页面
+├── app.js                     # 交互、状态与数据渲染
+├── styles.css                 # 视觉系统与响应式布局
+├── server.js                  # 本地 Node API 网关
+├── api/                       # Vercel API 入口
+├── cloud-functions/           # EdgeOne Pages 函数入口
+├── services/akshare_service/  # AKShare 数据服务原型
+├── src/                       # Clean Architecture 分层代码
+├── docs/                      # 产品、架构、数据源和研究闭环文档
+├── specs/                     # SDD 规格文档
+└── tests/                     # 单元与集成测试
+```
+
+## 本地运行
+
+项目内置 Node.js 运行时，也可以使用系统 Node.js 18+。
 
 ```bash
 npm start
 ```
 
-然后打开 `http://127.0.0.1:4173`。页面每 60 秒自动刷新，也可点击右上角刷新按钮。
-
-## GitHub Desktop + Vercel 公开发布
-
-这条路线让别人直接通过网址访问产品，操作门槛最低：
-
-1. 打开 GitHub Desktop。
-2. 选择 `Add Local Repository`。
-3. 选择本项目文件夹：`/Users/byhkk/Documents/找工作/a_share_sector_flow_app`。
-4. 点击 `Publish repository` 上传到 GitHub。
-5. 打开 Vercel，选择 `Add New Project`，导入刚发布的 GitHub 仓库。
-6. Framework Preset 选择 `Other` 或静态默认配置，直接 Deploy。
-
-当前 Vercel 配置使用 `vercel.json` 作为静态公开版本。它会展示完整前端体验；如果没有后端 API，页面会自动降级为演示数据。
-
-每次在本地改完代码后，改动不会自动同步到 GitHub。需要执行一次发布链路：
+然后访问：
 
 ```text
-GitHub Desktop -> Commit to main -> Push origin -> Vercel 自动重新部署
+http://127.0.0.1:4173
 ```
 
-也就是说，Vercel 会自动监听 GitHub 的更新，但 Codex 在本地帮你改文件后，仍需要提交并推送到 GitHub。
+如果本机没有全局 Node.js，可使用项目自带运行时：
 
-真实 AKShare、AI Agent、定时任务和缓存需要单独部署后端服务，推荐使用 `docker-compose.yml`：
-
-```text
-web: Node Web/API Gateway
-akshare: Python AKShare Data Service
+```bash
+./.runtime/node-v24.15.0-darwin-arm64/bin/node server.js
 ```
 
-详见 `docs/DEPLOYMENT.md`。
-
-## 低成本数据更新方案
-
-如果不想维护一直在线的服务器，可以使用 Serverless + 外部定时触发：
-
-```text
-Vercel Cron / cron-job.org
--> 调用抓取函数
--> Python AKShare 数据服务或轻量采集任务
--> 写入 Supabase / MongoDB Atlas / Redis 云缓存
--> 前端读取缓存 API
-```
-
-这个方案把“看网页”和“更新数据”拆开。用户打开网页时不实时跑 AKShare，而是读取 9:00、12:00、20:00 定时更新后的缓存结果。好处是成本低、页面响应快；代价是架构多了数据库、定时任务和数据过期状态管理。
-
-## 项目 Harness
-
-这个项目会按“个人投研操作系统”的方向长期演进。开工前优先阅读：
-
-- `docs/PROJECT_CONTEXT.md`：产品目标、用户工作流和非目标。
-- `docs/ARCHITECTURE.md`：DDD + Clean 的目标架构和依赖规则。
-- `docs/DESIGN_SYSTEM.md`：页面骨架、亮暗主题、组件规则和 UI benchmark。
-- `docs/UI_BENCHMARKS.md`：Investment OS、Figma SDS、shadcn/ui、Untitled UI、Tremor 和 TradingView 的组合参考。
-- `docs/DEVELOPMENT_HARNESS.md`：SDD + TDD、测试金字塔、质量检查和架构护栏。
-- `docs/AI_PRODUCT_AGENT_STRATEGY.md`：LLM + 工具调用 + 记忆 + 规划、RAG 取舍、MCP、多 Agent、可观测性、降级和评测。
-- `docs/AI_HARNESS.md`：AI 在产品中的入口、Agent 分工、工具约束和输出边界。
-- `docs/DATA_SOURCE_AKSHARE.md`：AKShare 数据源接入方案。
-- `docs/ROADMAP.md`：从当前 MVP 到个人投研工作台、Research Shell、MCP 和多 Agent 的路线。
-- `specs/0001-personal-investment-os.md`：第一阶段产品规格。
-
-开发前先写规格，开发后运行：
+## 质量检查
 
 ```bash
 npm run check
 ```
 
-如果系统没有全局 `npm`，可以使用项目自带运行时执行：
+或：
 
 ```bash
 ./.runtime/node-v24.15.0-darwin-arm64/bin/node scripts/quality-check.mjs
+./.runtime/node-v24.15.0-darwin-arm64/bin/node --test tests/**/*.test.js
 ```
 
-当前检查会验证核心文件、文档入口、`server.js` 和 `app.js` 语法、单元/集成测试、架构护栏，以及页面是否引用样式、脚本和 ECharts。
+质量检查覆盖核心文件、脚本语法、测试、架构护栏、页面引用和前端资源完整性。
 
-## 当前数据接入
+## 部署
 
-- `GET /api/market`：行业板块排名、主力净流入、涨跌幅、成交额以及前八板块分时资金曲线。
-- `GET /api/sector/:code/stocks`：所选板块内个股资金排名。
-- `GET /api/hot-stocks`：东方财富实时热股榜，并合并个股涨跌幅和当日主力净流入。
-- 浏览器只访问本地代理，不直接调用上游接口。
-- 当前使用的是东方财富公开网页行情端点，不是官方承诺稳定性的商业 API。
+GitHub `main` 分支作为代码源。线上展示通过 Vercel 部署，国内演示可使用 EdgeOne Pages 镜像。
 
-图表使用项目内 `vendor/echarts.min.js`。板块数据每 60 秒刷新；热股榜适合按 9:00、12:00、20:00 三个时点更新，避免制造不必要的实时噪音。
-
-## AKShare 接入规划
-
-当前 Demo 使用东方财富公开行情作为可运行前端数据源，用来快速验证板块曲线、热股榜、搜索和联动交互。下一阶段主数据源切换为 AKShare，由独立 Python Data Service 负责结构化 A 股数据，再由 Node 后端统一聚合给前端。
-
-- 行情与资金：保留东方财富公开网页接口用于实时板块、分时资金和热股榜原型。
-- 结构化数据：通过 AKShare 读取行业资金、概念资金、个股资金、财务摘要、业绩预告和宏观数据。
-- 研究资料：接入公告、财报、新闻和用户笔记，作为 Evidence Store 与 RAG 知识库来源。
-- 自然语言取数：将用户问题解析为平台内部工具调用，返回可追溯数据表和证据链。
-- 报告生成：用结构化行情 + 资讯事件 + 用户判断生成市场日报、板块观察、个股观察和复盘报告。
-
-后端统一输出类似下面的结构：
-
-```json
-{
-  "name": "机器人",
-  "score": 93,
-  "netInflow": 48.6,
-  "turnover": 1264,
-  "volumeRatio": 2.41,
-  "change": 3.28,
-  "signal": "强趋势",
-  "flow": [{"time": "09:30", "value": 2.8}],
-  "stocks": [{"name": "拓普集团", "change": 5.84, "netInflow": 8.62}]
-}
+```text
+GitHub main
+  -> Vercel
+  -> EdgeOne Pages
 ```
 
-## 数据源路线
+后端数据可采用低成本缓存方案：
 
-- 原型/研究：前端先用东方财富公开网页接口低成本验证交互，但要注意稳定性、频控和授权边界。
-- 个人研究：AKShare 作为主要结构化数据源，补齐概念、财务、业绩事件和历史资金。
-- 后端架构：`Node API Gateway + Python AKShare Data Service + Evidence Store + AI Agent`。
-- 数据体验：任何外部数据源失败时，都要回退到缓存、演示数据或明确的数据状态提示。
+```text
+Scheduled Job
+  -> Data Fetcher
+  -> External Cache / Database
+  -> Public API
+  -> Frontend
+```
 
-## 合规提醒
+适合 9:00、12:00、20:00 定时刷新热股榜、板块资金和事件资料，避免每次用户打开页面都实时请求上游数据。
 
-东方财富服务协议提示，未经交易所书面同意不得复制、转供行情数据或用于开发衍生品。因此当前实现只适合作为本机产品原型，不应直接公开部署或商业分发。正式上线前需取得数据许可，并处理投顾资质、延迟声明、风险揭示和模型回测披露。
+## Roadmap
+
+- P0：完善总览页、概念叠加、公司详情和捕捉模块展示。
+- P1：接入 AKShare 数据服务，建立行情、公告、财报和新闻缓存。
+- P2：建立 Evidence Store 与 RAG 检索链路，支持基于证据的问答与日报生成。
+- P3：补齐多 Agent 编排、任务追踪、失败降级、工具调用日志和评测集。
+- P4：形成稳定的公开展示版本与个人研究数据工作流。
+
+## 合规说明
+
+本项目仅用于个人研究、产品设计和技术验证。第三方行情和资讯数据需遵守对应平台、交易所和数据供应商的授权规则。正式公开运营前，需要处理数据许可、延迟声明、风险揭示、投顾合规和模型输出边界。
