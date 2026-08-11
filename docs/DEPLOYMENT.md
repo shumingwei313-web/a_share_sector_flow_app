@@ -176,11 +176,17 @@ http://127.0.0.1:4173/api/capture
 ```text
 CAPTURE_PROVIDER=auto
 AKSHARE_SERVICE_URL=http://akshare:8765
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5
+AI_PROVIDER=deepseek
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-v4-flash
+DEEPSEEK_API_KEY=
+DEEPSEEK_THINKING=disabled
+AI_MAX_OUTPUT_TOKENS=1200
 AI_INPUT_PRICE_PER_1K=0
 AI_OUTPUT_PRICE_PER_1K=0
 ```
+
+这些变量只配置在服务端环境中。浏览器只调用 `/api/agent/query`，不会拿到模型密钥。
 
 ## 数据与合规
 

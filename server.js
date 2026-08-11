@@ -1,11 +1,13 @@
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
+const { loadLocalEnv } = require("./src/infrastructure/env/loadLocalEnv");
 const { handleCaptureRequest } = require("./src/interfaces/http/captureController");
 const { handleAgentQuery } = require("./src/interfaces/http/agentController");
 
-const PORT = Number(process.env.PORT || 4173);
 const ROOT = __dirname;
+loadLocalEnv(ROOT);
+const PORT = Number(process.env.PORT || 4173);
 const EASTMONEY_TOKEN = "bd1d9ddb04089700cf9c27f6f7426281";
 const CACHE_MS = 20_000;
 const cache = new Map();

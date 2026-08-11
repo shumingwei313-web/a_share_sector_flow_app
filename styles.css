@@ -1673,6 +1673,29 @@ h3 {
   line-height: 1.58;
 }
 
+.module-agent-brief {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.module-agent-brief span {
+  border: 1px solid rgba(70, 84, 86, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.module-agent-brief i {
+  width: 12px;
+  border-top: 1px solid rgba(45, 212, 191, 0.38);
+}
+
 .primary-action {
   min-width: 116px;
   min-height: 38px;
@@ -1931,6 +1954,18 @@ h3 {
 .evidence-rag-stats b {
   margin-right: 3px;
   color: var(--green);
+}
+
+.evidence-rag-action {
+  width: fit-content;
+  border: 1px solid rgba(45, 212, 191, 0.38);
+  border-radius: 8px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--green);
+  cursor: pointer;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .evidence-record-list,
@@ -2958,7 +2993,65 @@ a.module-card:hover {
   margin-bottom: 8px;
 }
 
+.ai-result-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  border: 1px solid rgba(70, 84, 86, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 12px;
+}
+
+.ai-result-head span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-result-head em {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--green);
+  padding: 5px 9px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.rag-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rag-flow span {
+  position: relative;
+  border: 1px solid rgba(70, 84, 86, 0.7);
+  border-radius: 8px;
+  background: rgba(10, 18, 18, 0.48);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.rag-flow span:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  width: 8px;
+  border-top: 1px solid rgba(45, 212, 191, 0.42);
+}
+
 .ai-answer {
+  margin-top: 12px;
   max-height: 320px;
   overflow: auto;
   white-space: pre-wrap;
@@ -2969,6 +3062,28 @@ a.module-card:hover {
   padding: 12px;
   font: inherit;
   line-height: 1.7;
+}
+
+.rag-query {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.rag-query div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rag-query span {
+  border: 1px solid rgba(70, 84, 86, 0.68);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .rag-evidence {
@@ -3012,6 +3127,51 @@ a.module-card:hover {
   line-height: 1.45;
 }
 
+.rag-evidence p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tool-call-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tool-call-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(70, 84, 86, 0.62);
+  border-radius: 8px;
+  background: rgba(10, 18, 18, 0.42);
+  padding: 8px 10px;
+}
+
+.tool-call-list span,
+.tool-call-list b,
+.tool-call-list em {
+  min-width: 0;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.tool-call-list span {
+  color: var(--ink);
+}
+
+.tool-call-list em {
+  color: var(--green);
+}
+
+.tool-call-list b {
+  color: var(--muted);
+}
+
 .token-meter {
   display: flex;
   flex-wrap: wrap;
@@ -3027,6 +3187,38 @@ a.module-card:hover {
   padding: 6px 9px;
   font-size: 12px;
   font-weight: 800;
+}
+
+.ai-agent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.ai-agent-actions button {
+  border: 1px solid rgba(45, 212, 191, 0.42);
+  border-radius: 8px;
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--green);
+  cursor: pointer;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ai-agent-actions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ai-agent-actions span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 @media (max-width: 1380px) {

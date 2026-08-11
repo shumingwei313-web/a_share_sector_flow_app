@@ -36,6 +36,67 @@ https://a-share-sector-flow-app.vercel.app/
 
 每一步都保留原始证据和用户判断，避免只留下无法追溯的最终结论。
 
+## 架构设计
+
+项目采用 DDD + Clean Architecture 的混合架构。当前仍保持轻量 MVP 形态，但核心边界已经按可扩展系统设计：
+
+```text
+domain
+  金融投研领域模型和纯规则，例如 CaptureItem、Evidence、Sector、Stock、ResearchNote。
+
+application
+  用例编排，例如获取捕捉信息流、检索研究证据、运行研究 Agent、生成 Evidence Pack。
+
+infrastructure
+  外部数据源、缓存、数据库、模型调用和 MCP 适配，例如 Eastmoney、AKShare、DeepSeek、stock-sdk。
+
+interfaces
+  Web UI、HTTP API、Vercel API Routes、EdgeOne Functions，后续可扩展 MCP tools。
+```
+
+核心原则：
+
+- 前端不直接依赖东方财富、AKShare、DeepSeek 或 MCP。
+- 数据源通过 provider 适配后统一进入应用层。
+- AI 模型只通过服务端接口调用，API Key 不进入浏览器。
+- 领域规则优先放在 `domain` 或 `application`，便于测试和复用。
+- 外部数据必须保留来源、时间、证据等级和降级状态。
+
+## 整体数据流
+
+```text
+User Browser
+  -> Web UI
+  -> HTTP API / Vercel API Route
+  -> Application Use Case
+  -> Data Provider Router
+      -> Eastmoney public endpoints
+      -> AKShare Python service
+      -> stock-sdk
+      -> MCP adapters
+      -> Demo fallback
+  -> Domain Normalization
+  -> Evidence Store / Cache
+  -> RAG Evidence Pack
+  -> LLM / Research Agent
+  -> Structured Research Output
+  -> Web UI / Research Note
+```
+
+这条链路的设计目标是把“行情数据”“公开资料”“用户判断”和“AI 输出”放进同一个研究上下文里，而不是让页面只展示一组临时接口返回值。
+
+## Benchmark 与产品取舍
+
+项目主要参考两类 benchmark：
+
+| Benchmark | 借鉴点 | 情绪之道的取舍 |
+| --- | --- | --- |
+| Investment OS | 把投资研究设计成连续系统，而不是行情看板 | 保留研究链路思想，先聚焦个人投研和 A 股场景 |
+| research-agent | 多 Agent 分工、工具调用、证据检索和结构化输出 | 借鉴 Agent 职责边界，但产品入口嵌入研究闭环 |
+| 东方财富 / 同花顺 | 板块热度、资金流、热股榜和个股详情 | 只作为数据和交互参考，不把产品定位成交易终端 |
+
+因此，情绪之道的重点不是“更快给出结论”，而是让用户知道结论从哪些证据、事件和判断中来。
+
 ## Agent 架构
 
 项目借鉴多 Agent 研究流程，将研究任务拆成可观测、可回退的职责边界：
@@ -51,6 +112,40 @@ https://a-share-sector-flow-app.vercel.app/
 | Memory | 保存历史判断和复盘结果 | 可回溯研究资产 |
 
 设计原则是“先事实、后判断；先证据、后结论；先保留过程、后生成报告”。
+
+## RAG Harness
+
+项目中的 RAG 不是一个独立页面，而是研究助理每次回答前的证据准备过程。
+
+```text
+用户问题
+  -> 当前页面上下文
+  -> Capture 信息流
+  -> 市场数据
+  -> 热股榜
+  -> 关键词 / 实体召回
+  -> 证据排序
+  -> Evidence Pack
+  -> DeepSeek / OpenAI-compatible 模型
+  -> 结构化回答
+```
+
+Evidence Pack 保留：
+
+- 证据标题、摘要和来源。
+- 新闻、公告、财报、电话会议、研报观点、行情异动等类型。
+- 相关公司、板块、概念。
+- 证据等级、置信度和更新时间。
+
+AI 输出必须包含：
+
+- 结论。
+- 依据。
+- 不确定性。
+- 待验证问题。
+- 风险提示。
+
+当没有配置模型 API Key 或模型调用失败时，系统会降级为 RAG dry-run，仍然展示命中的证据、工具调用状态和 token 估算，保证产品可解释、可演示、可排错。
 
 ## 数据与工具
 

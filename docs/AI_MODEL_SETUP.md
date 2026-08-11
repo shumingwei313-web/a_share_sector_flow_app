@@ -24,9 +24,10 @@
 
 ```text
 AI_PROVIDER=deepseek
-AI_BASE_URL=https://api.deepseek.com/v1
-AI_MODEL=deepseek-chat
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-v4-flash
 DEEPSEEK_API_KEY=你的密钥
+DEEPSEEK_THINKING=disabled
 ```
 
 也可以切换到任何 OpenAI-compatible 服务：
@@ -59,10 +60,12 @@ Project Settings
 
 ```text
 AI_PROVIDER=deepseek
-AI_BASE_URL=https://api.deepseek.com/v1
-AI_MODEL=deepseek-chat
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=deepseek-v4-flash
 DEEPSEEK_API_KEY=你的密钥
 AI_TIMEOUT_MS=30000
+AI_MAX_OUTPUT_TOKENS=1200
+DEEPSEEK_THINKING=disabled
 ```
 
 保存后重新部署。前端点击右上角「研究助理」时，会调用：
@@ -72,6 +75,8 @@ POST /api/agent/query
 ```
 
 API Key 只存在服务端环境变量中，不进入浏览器。
+
+推荐在 Vercel 里同时勾选 Production、Preview、Development 三个环境，避免预览部署和生产部署行为不一致。配置后必须 Redeploy 一次，旧部署不会自动读取新环境变量。
 
 ## RAG 在项目中的作用
 

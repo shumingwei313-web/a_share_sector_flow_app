@@ -38,7 +38,28 @@ async function runResearchAgent({ question, context = {}, tools = {}, env = proc
     };
   }
 
-  const llm = await callOpenAiCompatible({ config, system: DEFAULT_SYSTEM_PROMPT, prompt, fetchImpl });
+  let llm;
+  try {
+    llm = await callOpenAiCompatible({ config, system: DEFAULT_SYSTEM_PROMPT, prompt, fetchImpl });
+  } catch (error) {
+    const answer = buildModelFallbackAnswer({ question: cleanQuestion, rag, error });
+    return {
+      configured: true,
+      traceId,
+      model: config.model,
+      provider: config.provider,
+      answer,
+      rag,
+      usage: { inputTokens, outputTokens: estimateTokens(answer), totalTokens: inputTokens + estimateTokens(answer) },
+      billing: { currency: "USD", estimatedCost: 0, billable: false },
+      observability: {
+        latencyMs: Date.now() - startedAt,
+        fallbackUsed: true,
+        providerError: error.message,
+        toolCalls: summarizeToolCalls(rag),
+      },
+    };
+  }
   const outputTokens = llm.usage.outputTokens || estimateTokens(llm.answer);
   const actualInputTokens = llm.usage.inputTokens || inputTokens;
   const estimatedCost = estimateCost({
@@ -110,20 +131,27 @@ function buildPrompt({ question, context, rag }) {
 }
 
 async function callOpenAiCompatible({ config, system, prompt, fetchImpl }) {
+  const body = {
+    model: config.model,
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: prompt },
+    ],
+    temperature: Number(config.temperature),
+    max_tokens: Number(config.maxOutputTokens),
+    stream: false,
+  };
+  if (config.provider === "deepseek") {
+    body.thinking = { type: config.thinking };
+  }
+
   const response = await fetchImpl(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.2,
-    }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(Number(config.timeoutMs || 30_000)),
   });
   if (!response.ok) throw new Error(`AI provider returned ${response.status}`);
@@ -144,8 +172,11 @@ function resolveModelConfig(env) {
   return {
     provider,
     apiKey: env.AI_API_KEY || env.DEEPSEEK_API_KEY || env.OPENAI_API_KEY || "",
-    baseUrl: env.AI_BASE_URL || (hasDeepSeek ? "https://api.deepseek.com/v1" : "https://api.openai.com/v1"),
-    model: env.AI_MODEL || env.OPENAI_MODEL || (hasDeepSeek ? "deepseek-chat" : "gpt-5"),
+    baseUrl: env.AI_BASE_URL || (hasDeepSeek ? "https://api.deepseek.com" : "https://api.openai.com/v1"),
+    model: env.AI_MODEL || env.OPENAI_MODEL || (hasDeepSeek ? "deepseek-v4-flash" : "gpt-5"),
+    temperature: env.AI_TEMPERATURE || 0.2,
+    maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS || 1200,
+    thinking: env.DEEPSEEK_THINKING || "disabled",
     timeoutMs: env.AI_TIMEOUT_MS || 30_000,
   };
 }
@@ -156,15 +187,26 @@ function buildDryRunAnswer({ question, rag }) {
     ? top.map((item, index) => `${index + 1}. ${item.title}（${item.type}，来源：${item.source}）`).join("\n")
     : "暂无命中证据。";
   return [
-    "结论：AI Harness 已接入到 RAG 检索链路，但当前未配置模型 API Key，所以先返回可解释的 dry-run 结果。",
+    "结论：研究助理已经完成 RAG 证据检索；当前未配置模型 API Key，因此先返回可解释的证据整理结果。",
     "",
     `依据：系统已根据问题「${question}」检索当前页面上下文、捕捉信息流、市场概览和热股榜，命中的证据包括：\n${evidenceLines}`,
     "",
-    "不确定性：当前 dry-run 没有调用真实 LLM，只能说明检索到了哪些证据，不能完成完整产业链推理。",
+    "不确定性：当前未调用真实模型，只能说明检索到了哪些证据，不能完成完整产业链推理。",
     "",
-    "待验证问题：下一步配置 AI_API_KEY/DEEPSEEK_API_KEY 后，让模型基于这些证据输出结构化研究假设；同时把 Evidence Store 从关键词检索升级为向量检索。",
+    "待验证问题：下一步配置 AI_API_KEY 或 DEEPSEEK_API_KEY 后，让模型基于这些证据输出结构化研究假设；同时把 Evidence Store 从关键词检索升级为向量检索。",
     "",
     "风险提示：以上仅用于研究流程演示，不构成投资建议。",
+  ].join("\n");
+}
+
+function buildModelFallbackAnswer({ question, rag, error }) {
+  const dryRun = buildDryRunAnswer({ question, rag });
+  return [
+    "结论：模型服务暂时不可用，系统已保留 RAG 证据检索结果并进入降级输出。",
+    "",
+    dryRun.replace("结论：研究助理已经完成 RAG 证据检索；当前未配置模型 API Key，因此先返回可解释的证据整理结果。", "证据检索：已完成当前问题的 Evidence Pack 准备。"),
+    "",
+    `技术状态：${error?.message || "provider unavailable"}`,
   ].join("\n");
 }
 

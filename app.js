@@ -284,6 +284,41 @@ const agentPipeline = [
   },
 ];
 
+const workflowAgentActions = {
+  capture: {
+    button: "AI 整理捕捉",
+    title: "捕捉 Agent",
+    agent: "Collector + Retriever",
+    output: "结构化证据清单",
+    prompt: "请把当前捕捉到的事件、新闻、公告、财报、电话会议、研报观点和行情异动整理为结构化证据。输出：发生了什么、影响对象、产业链路径、相关公司、证据等级、待验证问题、风险提示。不要给买卖建议。",
+  },
+  connect: {
+    button: "AI 检索证据",
+    title: "资料库 Agent",
+    agent: "Retriever + Memory",
+    output: "可引用 Evidence Pack",
+    prompt: "请基于当前 Evidence Store 和页面上下文，生成一份可引用证据包。输出：命中证据、支持观点、反证、证据缺口、下一步需要补充的数据来源。不要编造未出现的事实。",
+  },
+  conclude: {
+    button: "AI 生成假设",
+    title: "研究链 Agent",
+    agent: "Planner + Analyst + Critic",
+    output: "研究假设与反证",
+    prompt: "请基于当前板块、概念、热股和证据包，生成一条可复盘研究假设。输出：核心假设、支持证据、反证、市场是否已经反应、置信度、待验证问题、适合保存到研究笔记的结论。",
+  },
+  daily: {
+    button: "AI 生成日报",
+    title: "日报 Agent",
+    agent: "Writer + Memory",
+    output: "个人研究日报草稿",
+    prompt: "请把今天的市场情绪、板块资金、热门概念、热股线索、证据缺口和待复盘问题整理成个人研究日报。要求简洁、结构化，只做研究辅助，不给买卖建议。",
+  },
+};
+
+function getWorkflowAgentAction(moduleKey) {
+  return workflowAgentActions[moduleKey] || workflowAgentActions.connect;
+}
+
 function updateConceptSelection(name, action = "add") {
   if (action === "remove") {
     activeConcepts = activeConcepts.filter((concept) => concept !== name);
@@ -1158,6 +1193,34 @@ function getResearchModuleData(key) {
   return modules[key] || modules.connect;
 }
 
+function getWorkflowAgentContext(moduleKey, moduleData) {
+  const selectedStock = rankSectorStocks(selectedSector.stocks || [])[0];
+  const records = getEvidenceRecords();
+  return {
+    workflowStep: moduleKey,
+    moduleTitle: moduleData.title,
+    selectedSector,
+    selectedConcepts: activeConcepts,
+    selectedStock,
+    evidenceRecords: records.slice(0, 12),
+    captureItems: getFilteredCaptureItems().slice(0, 8),
+    hotStocks: hotStocks.slice(0, 8),
+    activeResearchTask,
+    agentPipeline: agentPipeline.filter((agent) => agent.modules.includes(moduleKey)),
+  };
+}
+
+function openWorkflowAiAgent(moduleKey) {
+  const moduleData = getResearchModuleData(moduleKey);
+  const action = getWorkflowAgentAction(moduleKey);
+  const concept = getActiveConceptLabel("、") || getConceptStats(selectedSector.stocks || []).at(0)?.name || selectedSector.name;
+  openAiAgent({
+    title: action.title,
+    presetQuestion: `${action.prompt}\n\n当前模块：${moduleData.title}\n当前板块：${selectedSector.name}\n当前概念：${concept}\n当前信号：${selectedSector.signal}\n主力净流入：${formatMoney(selectedSector.netInflow)}`,
+    extraContext: getWorkflowAgentContext(moduleKey, moduleData),
+  });
+}
+
 function getFilteredCaptureItems() {
   return captureItems.filter((item) => {
     const typeMatched = captureFilter === "all" || item.type === captureFilter;
@@ -1247,6 +1310,29 @@ function saveCurrentResearchNote(note) {
     savedAt: new Date().toLocaleString("zh-CN", { hour12: false }),
   };
   localStorage.setItem(RESEARCH_NOTE_STORAGE_KEY, JSON.stringify(savedNotes));
+}
+
+function saveAgentAnswerToResearchNote({ question, answer, evidenceCount, traceId }) {
+  const current = getCurrentResearchNote();
+  const cleanAnswer = String(answer || "").trim();
+  const summary = cleanAnswer.split("\n").filter(Boolean).slice(0, 4).join("\n");
+  saveCurrentResearchNote({
+    ...current,
+    hypothesis: question || current.hypothesis,
+    reason: [
+      current.reason,
+      "",
+      "研究助理输出：",
+      summary || "已完成证据检索，等待进一步整理。",
+    ].join("\n").trim(),
+    counterEvidence: current.counterEvidence,
+    confidence: current.confidence || "中低",
+    reviewDate: current.reviewDate || "",
+    agentTraceId: traceId || "",
+    agentEvidenceCount: evidenceCount || 0,
+  });
+  renderResearchChainWorkbench();
+  renderAgentOrchestrator();
 }
 
 async function loadCaptureFeed() {
@@ -1466,13 +1552,14 @@ function renderEvidenceStoreWorkbench() {
         <h3>询问资料库</h3>
         <label>
           <span>问题</span>
-          <textarea readonly>基于已入库证据，${selectedSector.name}当前资金流入是否有真实事件支撑？请列出支持证据、反证和待验证问题。</textarea>
+          <textarea id="evidence-rag-question">基于已入库证据，${selectedSector.name}当前资金流入是否有真实事件支撑？请列出支持证据、反证和待验证问题。</textarea>
         </label>
         <div class="evidence-rag-stats">
           <span><b>${records.length}</b>条证据</span>
           <span><b>${sourceCount}</b>个来源</span>
           <span><b>${companyCount}</b>家公司</span>
         </div>
+        <button id="ask-evidence-store-btn" class="evidence-rag-action" type="button">询问资料库</button>
       </article>
       <div class="evidence-record-list">
         ${records.map((record) => `
@@ -1491,6 +1578,17 @@ function renderEvidenceStoreWorkbench() {
       </div>
     </div>
   `;
+  $("#ask-evidence-store-btn")?.addEventListener("click", () => {
+    const question = $("#evidence-rag-question")?.value.trim();
+    openAiAgent({
+      title: "询问资料库",
+      presetQuestion: question || `基于已入库证据，${selectedSector.name}当前资金流入是否有真实事件支撑？`,
+      extraContext: {
+        workflowStep: "connect",
+        evidenceRecords: records,
+      },
+    });
+  });
 }
 
 function renderResearchChainWorkbench() {
@@ -1697,10 +1795,19 @@ function renderResearchModule() {
     data.title = `捕捉：${activeResearchTask.topic}`;
     data.subtitle = `对象：${activeResearchTask.objectType} · 资料范围：${activeResearchTask.sources.join("、") || "待选择"} · 创建时间：${activeResearchTask.createdAt}`;
   }
-  document.querySelector(".primary-action").textContent = "+ 开始研究";
   $("#module-eyebrow").textContent = data.eyebrow;
   $("#module-title").textContent = data.title;
   $("#module-subtitle").textContent = data.subtitle;
+  const action = getWorkflowAgentAction(activeWorkspaceModule);
+  document.querySelector(".primary-action").textContent = `+ ${action.button}`;
+  document.querySelector(".primary-action").onclick = () => openWorkflowAiAgent(activeWorkspaceModule);
+  $("#module-agent-brief").innerHTML = `
+    <span>${action.agent}</span>
+    <i></i>
+    <span>${action.output}</span>
+    <i></i>
+    <span>RAG + Tool Context + Human Review</span>
+  `;
   $("#module-kpis").innerHTML = data.kpis.map(([label, value, note]) => `
     <article class="module-kpi">
       <span>${label}</span>
@@ -2025,31 +2132,77 @@ function openAiAgent(options = {}) {
       });
       const data = await response.json();
       const evidence = data.rag?.evidence || [];
+      const toolCalls = data.observability?.toolCalls || [];
+      const queryTokens = data.rag?.queryTokens || [];
       result.innerHTML = `
-        <strong>${data.configured ? "研究助理已响应" : "待配置模型服务"}</strong>
+        <div class="ai-result-head">
+          <div>
+            <strong>${data.configured ? "研究助理已响应" : "证据检索已完成"}</strong>
+            <span>${data.configured ? "模型已基于证据包生成回答" : "未配置模型 Key，当前展示 RAG dry-run 结果"}</span>
+          </div>
+          <em>${data.observability?.fallbackUsed ? "Fallback" : "Live Model"}</em>
+        </div>
+        <div class="rag-flow">
+          <span>问题</span>
+          <span>上下文</span>
+          <span>证据检索</span>
+          <span>${data.configured ? "模型回答" : "降级输出"}</span>
+        </div>
         <pre class="ai-answer">${escapeHtml(data.answer || "")}</pre>
+        <div class="rag-query">
+          <strong>检索关键词</strong>
+          <div>${queryTokens.length ? queryTokens.slice(0, 12).map((token) => `<span>${escapeHtml(token)}</span>`).join("") : "<span>暂无关键词</span>"}</div>
+        </div>
         <div class="rag-evidence">
-          <strong>命中证据</strong>
+          <strong>RAG 证据包</strong>
           ${evidence.length ? evidence.slice(0, 5).map((item, index) => `
             <article>
               <span>${index + 1}</span>
               <div>
                 <b>${escapeHtml(item.title || "未命名证据")}</b>
-                <small>${escapeHtml(item.type || "证据")} · ${escapeHtml(item.source || "unknown")} · 置信度 ${item.confidence || "-"}</small>
+                <small>${escapeHtml(item.type || "证据")} · ${escapeHtml(item.source || "unknown")} · ${escapeHtml(item.evidenceLevel || "Lx")} · 置信度 ${item.confidence || "-"}</small>
+                <p>${escapeHtml(item.summary || "暂无摘要")}</p>
               </div>
             </article>
           `).join("") : "<p>暂无命中证据。</p>"}
         </div>
+        <div class="tool-call-list">
+          <strong>工具调用</strong>
+          ${toolCalls.length ? toolCalls.map((tool) => `
+            <article>
+              <span>${escapeHtml(tool.name)}</span>
+              <em>${escapeHtml(tool.status)}</em>
+              <b>${Number(tool.resultCount || 0)} 条</b>
+            </article>
+          `).join("") : "<p>暂无工具调用记录。</p>"}
+        </div>
         <div class="token-meter">
           <span>请求：${data.traceId || "-"}</span>
           <span>引擎：${data.provider || "model"} / ${data.model}</span>
-          <span>输入 ${data.usage.inputTokens} tokens</span>
-          <span>输出 ${data.usage.outputTokens} tokens</span>
+          <span>输入 ${data.usage?.inputTokens || 0} tokens</span>
+          <span>输出 ${data.usage?.outputTokens || 0} tokens</span>
           <span>延迟 ${data.observability?.latencyMs || 0} ms</span>
           <span>${data.observability?.fallbackUsed ? "已降级" : "正常调用"}</span>
-          <span>估算费用：${data.billing.currency} ${data.billing.estimatedCost}</span>
+          <span>估算费用：${data.billing?.currency || "USD"} ${data.billing?.estimatedCost || 0}</span>
+        </div>
+        <div class="ai-agent-actions">
+          <button id="save-agent-answer-btn" type="button">保存到研究链</button>
+          <span>保存后可在「研究链」模块继续编辑、补充反证和设置复盘日期。</span>
         </div>
       `;
+      $("#save-agent-answer-btn")?.addEventListener("click", () => {
+        saveAgentAnswerToResearchNote({
+          question,
+          answer: data.answer,
+          evidenceCount: evidence.length,
+          traceId: data.traceId,
+        });
+        const saveButton = $("#save-agent-answer-btn");
+        if (saveButton) {
+          saveButton.textContent = "已保存";
+          saveButton.disabled = true;
+        }
+      });
     } catch (_) {
       result.innerHTML = "<p>研究助理暂不可用，请稍后重试。</p>";
     }

@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 const requiredFiles = [
   "index.html",
+  "README.md",
   "styles.css",
   "app.js",
   "server.js",
@@ -15,6 +16,7 @@ const requiredFiles = [
   "vendor/echarts.min.js",
   "scripts/architecture-check.mjs",
   "docs/PROJECT_CONTEXT.md",
+  "docs/PROJECT_PRESENTATION.md",
   "docs/BENCHMARK_INVESTMENT_OS.md",
   "docs/DESIGN_SYSTEM.md",
   "docs/UI_BENCHMARKS.md",
@@ -85,6 +87,12 @@ if (existsSync("index.html")) {
 
 const contextChecks = [
   ["docs/PROJECT_CONTEXT.md", "持续追踪投资逻辑"],
+  ["README.md", "Clean Architecture"],
+  ["README.md", "整体数据流"],
+  ["README.md", "RAG Harness"],
+  ["docs/PROJECT_PRESENTATION.md", "Clean Architecture"],
+  ["docs/PROJECT_PRESENTATION.md", "RAG"],
+  ["docs/PROJECT_PRESENTATION.md", "AI Harness"],
   ["docs/RESEARCH_LOOP.md", "产业链传导"],
   ["docs/RESEARCH_LOOP.md", "复盘"],
   ["docs/BENCHMARK_INVESTMENT_OS.md", "研究操作系统"],
