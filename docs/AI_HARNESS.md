@@ -55,16 +55,52 @@ Check 复盘
 
 ## 当前落地形态
 
-当前版本已经把流程 Agent 接入到左侧研究闭环模块：
+当前版本已经把流程 Agent 接入到左侧研究闭环模块，并在模块内部增加了 `AI HARNESS` 面板。它不是普通聊天框，而是把研究闭环拆成 6 个可触发的 AI 动作：
 
-| 模块 | 按钮 | Agent 组合 | 输入上下文 | 目标输出 |
+| 闭环步骤 | 按钮 | Agent 组合 | 输入上下文 | 目标输出 |
 | --- | --- | --- | --- | --- |
 | 捕捉 | AI 整理捕捉 | Collector + Retriever | 捕捉信息流、当前板块、热门概念、热股榜 | 结构化证据清单 |
 | 资料库 | AI 检索证据 | Retriever + Memory | EvidenceRecord、来源、公司、板块、用户问题 | 可引用 Evidence Pack |
-| 研究链 | AI 生成假设 | Planner + Analyst + Critic | 证据包、资金、人气、产业链、反证 | 研究假设与待验证问题 |
+| 比较 | AI 比较预期差 | Retriever + Analyst + Critic | 基本面证据、市场反应、资金、人气、反证 | 真实影响 / 情绪噪音判别 |
+| 判断 | AI 生成假设 | Planner + Analyst + Critic | 证据包、资金、人气、产业链、反证 | 研究假设与待验证问题 |
+| 记录 | AI 结构化笔记 | Writer + Memory | 研究对象、证据、个人判断、置信度 | 可复盘研究笔记 |
+| 复盘 | AI 生成复盘清单 | Critic + Memory | 历史笔记、后续行情、证伪信号 | 复盘问题与修正项 |
 | 研究日报 | AI 生成日报 | Writer + Memory | 今日市场、证据缺口、研究链、复盘记录 | 个人研究日报草稿 |
 
 产品层的按钮只负责组织意图和上下文，模型调用统一走 `/api/agent/query`。这样可以保持 Clean Architecture 的边界：前端表达研究任务，Application 层执行 RAG、工具调用、模型调用、降级和可观测性记录。
+
+后端 `runResearchAgent` 会根据 `workflowStep` 注入阶段约束。这样即使前端按钮文案变化，模型也会知道当前是 Capture、Connect、Compare、Conclude、Commit、Check 里的哪一步，并按对应输出格式回答。
+
+## 模型供应商
+
+模型只是一层可替换 provider，研究方法不绑定某个模型。
+
+```text
+前端 AI 动作
+-> /api/agent/query
+-> Application: runResearchAgent
+-> RAG: retrieveResearchEvidence
+-> Provider Adapter: OpenAI-compatible Chat Completions
+-> DeepSeek API 或 OpenAI GPT-4o 等模型
+-> 可观测性、Token 估算、降级输出
+```
+
+推荐环境变量：
+
+```text
+AI_PROVIDER=deepseek
+AI_BASE_URL=https://api.deepseek.com
+AI_MODEL=实际使用的 DeepSeek 模型名
+DEEPSEEK_API_KEY=...
+
+# 或者使用 OpenAI-compatible 配置
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o
+OPENAI_API_KEY=...
+```
+
+上线到 Vercel 时，API Key 只放在 Vercel Environment Variables，不写入 GitHub。
 
 ## Skills
 

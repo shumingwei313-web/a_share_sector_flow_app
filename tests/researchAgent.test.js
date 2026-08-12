@@ -1,6 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { resolveModelConfig, runResearchAgent } = require("../src/application/runResearchAgent");
+const {
+  buildSystemPrompt,
+  resolveModelConfig,
+  resolveWorkflowInstruction,
+  runResearchAgent,
+} = require("../src/application/runResearchAgent");
 const { tokenize } = require("../src/application/retrieveResearchEvidence");
 
 test("tokenize keeps financial entities for lightweight RAG", () => {
@@ -48,6 +53,17 @@ test("resolveModelConfig uses DeepSeek defaults when DeepSeek key exists", () =>
   assert.equal(config.baseUrl, "https://api.deepseek.com");
   assert.equal(config.model, "deepseek-v4-flash");
   assert.equal(config.thinking, "disabled");
+});
+
+test("AI harness adds workflow-specific instruction", () => {
+  const instruction = resolveWorkflowInstruction("compare");
+  assert.ok(instruction.includes("Compare"));
+  assert.ok(instruction.includes("预期差候选"));
+
+  const systemPrompt = buildSystemPrompt({ workflowStep: "commit" });
+  assert.ok(systemPrompt.includes("Commit"));
+  assert.ok(systemPrompt.includes("可复盘笔记"));
+  assert.ok(systemPrompt.includes("Human-in-the-loop"));
 });
 
 test("runResearchAgent calls OpenAI-compatible model when key exists", async () => {

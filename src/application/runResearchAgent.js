@@ -16,7 +16,8 @@ async function runResearchAgent({ question, context = {}, tools = {}, env = proc
   const traceId = `ai-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const rag = await retrieveResearchEvidence({ question: cleanQuestion, context, tools, limit: 8 });
   const prompt = buildPrompt({ question: cleanQuestion, context, rag });
-  const inputTokens = estimateTokens(`${DEFAULT_SYSTEM_PROMPT}\n${prompt}`);
+  const systemPrompt = buildSystemPrompt(context);
+  const inputTokens = estimateTokens(`${systemPrompt}\n${prompt}`);
   const config = resolveModelConfig(env);
 
   if (!config.apiKey) {
@@ -40,7 +41,7 @@ async function runResearchAgent({ question, context = {}, tools = {}, env = proc
 
   let llm;
   try {
-    llm = await callOpenAiCompatible({ config, system: DEFAULT_SYSTEM_PROMPT, prompt, fetchImpl });
+    llm = await callOpenAiCompatible({ config, system: systemPrompt, prompt, fetchImpl });
   } catch (error) {
     const answer = buildModelFallbackAnswer({ question: cleanQuestion, rag, error });
     return {
@@ -86,8 +87,35 @@ async function runResearchAgent({ question, context = {}, tools = {}, env = proc
   };
 }
 
+function buildSystemPrompt(context = {}) {
+  const workflowInstruction = resolveWorkflowInstruction(context.workflowStep);
+  return [
+    DEFAULT_SYSTEM_PROMPT,
+    "",
+    "当前 AI Harness 约束：",
+    workflowInstruction,
+    "",
+    "Human-in-the-loop 要求：你输出的是研究草稿，必须提示用户确认证据、假设和复盘动作后再保存。",
+  ].join("\n");
+}
+
+function resolveWorkflowInstruction(workflowStep = "") {
+  const instructions = {
+    capture: "当前阶段是 Capture 捕捉。只整理事件、新闻、公告、财报、电话会议、研报观点和行情异动；输出要包含：发生了什么、来源、时间、影响对象、证据等级、待验证问题。不要提前形成投资结论。",
+    connect: "当前阶段是 Connect 连接。把证据连接到行业、产业链节点、上下游和公司；输出要包含：事件 -> 行业 -> 产业链节点 -> 公司、证据引用、缺失证据、需要调用的下一类资料。",
+    compare: "当前阶段是 Compare 比较。比较基本面证据、市场反应、资金流、人气和已有预期；输出要包含：已反应部分、尚未验证部分、可能情绪噪音、反证、预期差候选。",
+    conclude: "当前阶段是 Conclude 判断。生成可追溯研究假设；输出要包含：核心假设、支持证据、反证、不确定性、置信度、待验证问题。禁止给买卖指令。",
+    commit: "当前阶段是 Commit 记录。把用户判断整理为可复盘笔记；输出要包含：为什么关注、支持证据、反证、置信度、复盘日期建议、需要保存的字段。",
+    check: "当前阶段是 Check 复盘。对历史假设生成验证清单；输出要包含：需要跟踪的指标、证伪信号、7天复盘问题、30天复盘问题、需要修正的判断偏差。",
+    daily: "当前阶段是 Daily 研究日报。把今日市场、证据、研究假设、反证和复盘事项整理为个人研究日报；输出要克制、结构化、可引用。",
+  };
+  return instructions[workflowStep] || "当前阶段未指定。请按研究闭环输出，并优先说明证据边界。";
+}
+
 function buildPrompt({ question, context, rag }) {
   const pageContext = {
+    workflowStep: context?.workflowStep || null,
+    moduleTitle: context?.moduleTitle || null,
     selectedSector: context?.sector ? {
       name: context.sector.name,
       code: context.sector.code,
@@ -98,6 +126,14 @@ function buildPrompt({ question, context, rag }) {
     selectedConcepts: context?.concepts || [],
     hotStocks: (context?.hotStocks || []).slice(0, 5),
     marketIndex: context?.marketIndex || null,
+    researchNote: context?.researchNote || null,
+    activeResearchTask: context?.activeResearchTask || null,
+    agentPipeline: (context?.agentPipeline || []).map((agent) => ({
+      name: agent.name,
+      title: agent.title,
+      input: agent.input,
+      output: agent.output,
+    })),
   };
 
   return [
@@ -227,7 +263,9 @@ function estimateCost({ inputTokens, outputTokens, inputPrice, outputPrice }) {
 }
 
 module.exports = {
+  buildSystemPrompt,
   buildPrompt,
   resolveModelConfig,
+  resolveWorkflowInstruction,
   runResearchAgent,
 };

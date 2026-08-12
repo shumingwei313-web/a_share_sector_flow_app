@@ -232,7 +232,7 @@ const agentPipeline = [
     title: "任务规划",
     input: "研究问题 / 对象",
     output: "拆解任务与证据清单",
-    modules: ["capture", "connect", "conclude", "daily"],
+    modules: ["capture", "connect", "compare", "conclude", "commit", "check", "daily"],
   },
   {
     key: "collector",
@@ -248,7 +248,7 @@ const agentPipeline = [
     title: "证据检索",
     input: "Evidence Store / RAG",
     output: "可引用证据包",
-    modules: ["connect", "conclude", "daily"],
+    modules: ["connect", "compare", "conclude", "daily"],
   },
   {
     key: "analyst",
@@ -256,7 +256,7 @@ const agentPipeline = [
     title: "研究判断",
     input: "资金、人气、产业链、公司线索",
     output: "假设与推理链",
-    modules: ["conclude", "daily"],
+    modules: ["compare", "conclude", "daily"],
   },
   {
     key: "critic",
@@ -264,7 +264,7 @@ const agentPipeline = [
     title: "反证校验",
     input: "假设、反证、风险约束",
     output: "置信度与待验证问题",
-    modules: ["conclude"],
+    modules: ["compare", "conclude", "check"],
   },
   {
     key: "writer",
@@ -272,7 +272,7 @@ const agentPipeline = [
     title: "报告生成",
     input: "证据包、研究链、复盘记录",
     output: "研究日报草稿",
-    modules: ["daily"],
+    modules: ["commit", "daily"],
   },
   {
     key: "memory",
@@ -280,7 +280,7 @@ const agentPipeline = [
     title: "记忆沉淀",
     input: "用户笔记、证据状态、复盘日期",
     output: "个人研究资产",
-    modules: ["connect", "conclude", "daily"],
+    modules: ["connect", "commit", "check", "daily"],
   },
 ];
 
@@ -299,12 +299,33 @@ const workflowAgentActions = {
     output: "可引用 Evidence Pack",
     prompt: "请基于当前 Evidence Store 和页面上下文，生成一份可引用证据包。输出：命中证据、支持观点、反证、证据缺口、下一步需要补充的数据来源。不要编造未出现的事实。",
   },
+  compare: {
+    button: "AI 比较预期差",
+    title: "比较 Agent",
+    agent: "Retriever + Analyst + Critic",
+    output: "真实影响 / 情绪噪音判别",
+    prompt: "请比较当前证据、资金流、涨跌幅、人气热度和已有市场反应，判断哪些更像真实影响，哪些可能只是情绪。输出：已被市场反应的部分、尚未验证的基本面影响、反证、预期差候选、下一步验证清单。不要给买卖建议。",
+  },
   conclude: {
     button: "AI 生成假设",
     title: "研究链 Agent",
     agent: "Planner + Analyst + Critic",
     output: "研究假设与反证",
     prompt: "请基于当前板块、概念、热股和证据包，生成一条可复盘研究假设。输出：核心假设、支持证据、反证、市场是否已经反应、置信度、待验证问题、适合保存到研究笔记的结论。",
+  },
+  commit: {
+    button: "AI 结构化笔记",
+    title: "记录 Agent",
+    agent: "Writer + Memory",
+    output: "可复盘研究笔记",
+    prompt: "请把当前研究对象、证据、个人判断和不确定性整理成可复盘笔记。输出：为什么关注、支持证据、反证、置信度、待验证问题、复盘日期建议、适合保存的笔记字段。不要把不确定内容写成确定结论。",
+  },
+  check: {
+    button: "AI 生成复盘清单",
+    title: "复盘 Agent",
+    agent: "Critic + Memory",
+    output: "复盘问题与修正项",
+    prompt: "请基于当前研究笔记和证据，生成后续复盘清单。输出：需要跟踪的价格/资金/公告/财报/电话会议指标、可能证伪假设的信号、7天和30天复盘问题、需要修正的判断偏差。",
   },
   daily: {
     button: "AI 生成日报",
@@ -314,6 +335,15 @@ const workflowAgentActions = {
     prompt: "请把今天的市场情绪、板块资金、热门概念、热股线索、证据缺口和待复盘问题整理成个人研究日报。要求简洁、结构化，只做研究辅助，不给买卖建议。",
   },
 };
+
+const researchLoopAiSteps = [
+  { key: "capture", no: "01", label: "捕捉", goal: "把原始信号收进来" },
+  { key: "connect", no: "02", label: "连接", goal: "形成可引用证据包" },
+  { key: "compare", no: "03", label: "比较", goal: "识别真实影响与情绪" },
+  { key: "conclude", no: "04", label: "判断", goal: "生成可追溯假设" },
+  { key: "commit", no: "05", label: "记录", goal: "沉淀个人研究记忆" },
+  { key: "check", no: "06", label: "复盘", goal: "验证并修正判断" },
+];
 
 function getWorkflowAgentAction(moduleKey) {
   return workflowAgentActions[moduleKey] || workflowAgentActions.connect;
@@ -1205,6 +1235,7 @@ function getWorkflowAgentContext(moduleKey, moduleData) {
     evidenceRecords: records.slice(0, 12),
     captureItems: getFilteredCaptureItems().slice(0, 8),
     hotStocks: hotStocks.slice(0, 8),
+    researchNote: getCurrentResearchNote(),
     activeResearchTask,
     agentPipeline: agentPipeline.filter((agent) => agent.modules.includes(moduleKey)),
   };
@@ -1218,6 +1249,24 @@ function openWorkflowAiAgent(moduleKey) {
     title: action.title,
     presetQuestion: `${action.prompt}\n\n当前模块：${moduleData.title}\n当前板块：${selectedSector.name}\n当前概念：${concept}\n当前信号：${selectedSector.signal}\n主力净流入：${formatMoney(selectedSector.netInflow)}`,
     extraContext: getWorkflowAgentContext(moduleKey, moduleData),
+  });
+}
+
+function openResearchLoopStepAgent(stepKey) {
+  const moduleData = getResearchModuleData(stepKey);
+  const action = getWorkflowAgentAction(stepKey);
+  const concept = getActiveConceptLabel("、") || getConceptStats(selectedSector.stocks || []).at(0)?.name || selectedSector.name;
+  openAiAgent({
+    title: action.title,
+    presetQuestion: `${action.prompt}\n\n当前研究闭环步骤：${moduleData.title}\n当前工作区：${getResearchModuleData(activeWorkspaceModule).title}\n当前板块：${selectedSector.name}\n当前概念：${concept}\n当前信号：${selectedSector.signal}\n主力净流入：${formatMoney(selectedSector.netInflow)}`,
+    extraContext: {
+      ...getWorkflowAgentContext(stepKey, moduleData),
+      currentWorkspaceModule: activeWorkspaceModule,
+      humanInTheLoop: {
+        required: true,
+        instruction: "AI 只能生成研究辅助草稿，用户需要确认证据、假设和复盘动作后再保存。",
+      },
+    },
   });
 }
 
@@ -1712,7 +1761,10 @@ function getAgentRunContext(moduleKey) {
   const stateText = {
     capture: "正在把公开信号转为可处理的任务输入",
     connect: "正在把原始资料沉淀为可检索证据",
+    compare: "正在比较真实影响、市场反应和反证信号",
     conclude: "正在把证据、反证和个人判断串成研究链",
+    commit: "正在把判断过程沉淀为可复盘笔记",
+    check: "正在把历史判断转为复盘问题和修正项",
     daily: "正在把研究链生成可分享的日报草稿",
   }[moduleKey] || "等待选择研究模块";
   return {
@@ -1788,6 +1840,57 @@ function renderAgentOrchestrator() {
   });
 }
 
+function renderResearchLoopAiPanel() {
+  const container = $("#research-loop-ai");
+  if (!container) return;
+  if (activeWorkspaceModule === "overview") {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  const currentStep = activeWorkspaceModule === "daily" ? "commit" : activeWorkspaceModule;
+  container.innerHTML = `
+    <div class="research-loop-head">
+      <div>
+        <p class="eyebrow">AI HARNESS</p>
+        <h3>研究闭环 Agent</h3>
+        <span>LLM + RAG + 工具上下文 + 记忆 + 人工确认</span>
+      </div>
+      <button type="button" id="loop-harness-btn">查看链路</button>
+    </div>
+    <div class="research-loop-steps" aria-label="研究闭环 AI 动作">
+      ${researchLoopAiSteps.map((step) => {
+        const action = getWorkflowAgentAction(step.key);
+        const active = step.key === currentStep;
+        return `
+          <button type="button" class="loop-step ${active ? "active" : ""}" data-loop-step="${step.key}">
+            <small>${step.no}</small>
+            <strong>${step.label}</strong>
+            <span>${action.agent}</span>
+            <em>${step.goal}</em>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+  container.querySelectorAll("[data-loop-step]").forEach((button) => {
+    button.addEventListener("click", () => openResearchLoopStepAgent(button.dataset.loopStep));
+  });
+  $("#loop-harness-btn")?.addEventListener("click", () => {
+    openAiAgent({
+      title: "解释 AI Harness 链路",
+      presetQuestion: "请基于当前页面，说明情绪之道 AI Harness 的链路：LLM 如何接收任务，RAG 如何准备证据，工具上下文如何进入模型，记忆如何保存，Human-in-the-loop 在哪里确认，以及 DeepSeek/GPT-4o 可以如何替换。",
+      extraContext: {
+        activeWorkspaceModule,
+        loopSteps: researchLoopAiSteps,
+        agentPipeline,
+        evidenceRecords: getEvidenceRecords(),
+        researchNote: getCurrentResearchNote(),
+      },
+    });
+  });
+}
+
 function renderResearchModule() {
   if (activeWorkspaceModule === "overview") return;
   const data = { ...getResearchModuleData(activeWorkspaceModule) };
@@ -1795,9 +1898,11 @@ function renderResearchModule() {
     data.title = `捕捉：${activeResearchTask.topic}`;
     data.subtitle = `对象：${activeResearchTask.objectType} · 资料范围：${activeResearchTask.sources.join("、") || "待选择"} · 创建时间：${activeResearchTask.createdAt}`;
   }
-  $("#module-eyebrow").textContent = data.eyebrow;
+  $("#module-eyebrow").textContent = "";
+  $("#module-eyebrow").hidden = true;
   $("#module-title").textContent = data.title;
-  $("#module-subtitle").textContent = data.subtitle;
+  $("#module-subtitle").textContent = "";
+  $("#module-subtitle").hidden = true;
   const action = getWorkflowAgentAction(activeWorkspaceModule);
   document.querySelector(".primary-action").textContent = `+ ${action.button}`;
   document.querySelector(".primary-action").onclick = () => openWorkflowAiAgent(activeWorkspaceModule);
@@ -1845,6 +1950,7 @@ function renderResearchModule() {
     </article>
   `).join("");
   renderAgentOrchestrator();
+  renderResearchLoopAiPanel();
   renderCaptureWorkbench();
   renderEvidenceStoreWorkbench();
   renderResearchChainWorkbench();
